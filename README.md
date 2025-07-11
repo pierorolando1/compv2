@@ -1,6 +1,6 @@
-# Compilador ABC
+# Compilador NOLA
 
-Compilador del lenguaje ABC, hecho en Java utilizando JFlex y CUP.
+Compilador del lenguaje NOLA, hecho en Java utilizando JFlex y CUP.
 
 Incluye 3 fases: Analizador léxico (scanner), sintáctico (parser) y semántico. 
 
@@ -9,13 +9,7 @@ Incluye 3 fases: Analizador léxico (scanner), sintáctico (parser) y semántico
 
 A continuación, se detallan aspectos generales del compilador.
 
-### Prerequisitos
-
-* [IntelliJ IDEA](https://www.jetbrains.com/idea/download/#section=windows) - El ambiente de desarrollo del proyecto.
-* [JFlex](http://www.jflex.de/download.html) - El generador de analizador léxico.
-* [CUP](http://www2.cs.tum.edu/projects/cup/) - El generador de parser.
-
-## Lenguaje ABC
+## Lenguaje NOLA
 
 Tokens, sintáxis y gramática del lenguaje elaborado.
 
@@ -28,7 +22,7 @@ Tokens, sintáxis y gramática del lenguaje elaborado.
 ### Palabras Reservadas
 
 ```
-AND | BEGIN | BOOLEAN | CHAR | CONST | DIV | DO | ELSE | END | FALSE | FUNCTION | IF | INT | LONGINT | MOD | NOT | OR | PROCEDURE | PROGRAM | READ | REAL | SHORTINT | STRING | THEN | TRUE | VAR | WHILE | WRITE | XOR	
+AND | BEGIN | BOOLEAN | CHAR | CONST | DIV | DO | ELSE | CK | CK | FALSE | FU | IF | INT | LONGINT | MOD | NOT | OR | PROCEDURE | PROGRAM | READ | REAL | SHORTINT | STRING | THEN | TRUE | VAR | WHILE | WRITE | XOR	
 ```
 
 La escritura de las palabras reservadas no importa, es decir, es equivalente escribir por ejemplo: *BEGIN*, *begin*, *Begin*, *BeGiN*, etc.
@@ -72,7 +66,7 @@ PROGRAM nombreDelPrograma
 
 BEGIN
     // Cuerpo    (opcional)
-END
+CK
 ```
 
 *Cuerpo*: Incluye estructuras de control, las funciones *READ* y *WRITE*, asignación de variables y/o constantes, y expresiones aritméticas.
@@ -100,13 +94,13 @@ guitarra = "ESP";
 * **Funciones**:
 
 ```
-FUNCTION miFuncion(int num): int
+FU miFuncion(int num): int
 // Declaración de constantes locales    (opcional)
 // Declaración de variables locales     (opcional)
 BEGIN
     // Cuerpo    (opcional)
     miFuncion := num;
-END
+CK
 ```
 
 Las funciones pueden contener o no parametros de entrada y es obligatorio que retornen un valor. Para el retorno de las funciones se debe establecer en la última línea del cuerpo, el nombre de la función seguido del operacidor de asignación y el valor de retorno.
@@ -119,7 +113,7 @@ PROCEDURE miProcedimiento(string pCadena)
 // Declaración de variables locales     (opcional)
 BEGIN
     // Cuerpo    (opcional)
-END
+CK
 ```
 
 *Cuerpo*: Incluye estructuras de control, las funciones *READ* y *WRITE*, asignación de variables y/o constantes, y expresiones aritméticas.
@@ -133,7 +127,7 @@ IF (var1 < var2) THEN
     // Cuerpo    (opcional)
 ELSE
     // Cuerpo    (opcional)
-END
+CK
 ```
 
 *Condición*: Las condiciones pueden ser de 1 a N condiciones y pueden estar unidas por *AND* u *OR*. La estructura *ELSE* es opcional así como el cuerpo.
@@ -146,7 +140,7 @@ END
 WHILE (var1 <> var2) DO
 BEGIN
     // Cuerpo     (opcional)
-END
+CK
 ```
 
 *Condición*: Las condiciones pueden ser de 1 a N condiciones y pueden estar unidas por *AND* u *OR*. La estructura *ELSE* es opcional así como el cuerpo.
@@ -160,7 +154,7 @@ END
 FOR var1 := var2 TO var3 DO
 BEGIN
     // Cuerpo    (opcional)
-END
+CK
 ```
 
 *Cuerpo*: Incluye estructuras de control, las funciones *READ* y *WRITE*, asignación de variables y/o constantes, y expresiones aritméticas.
@@ -232,20 +226,6 @@ Se detalla el token, el tipo y la linea.
 
 Se especifica el token o identificador que ocasiona el error, donde se incluye la línea y columna, y el segmento del código donde se encuentra dicho error.
 
-**Tabla de símbolos**
 
-Muestra el tipo de identificador o token, además del nombre dentro del código.
-En lo que respecta funciones y procedimientos, se detalla su tipo (si es función o procedimiento) el tipo de retorno (si es procedimiento es *null*), y la cantidad de parametros que recibe, especificando la respectiva información de dichos parametros de entrada; el nombre y su tipo de dato.
-
-**Traducción**
-
-Se muestra la traducción de estructuras de control *IF* y *WHILE*, declaraciones de variables globales y espresiones binarias aritméticas.
-
-## Autores
-
-* **José Navarro** - [JoseNA12](https://github.com/JoseNA12)
-* **Greivin Berrocal** - [berrocal9470](https://github.com/berrocal9470)
-
-* *Instituto Tecnológico de Costa Rica.*
 
 * *27/11/2018.*
