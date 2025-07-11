@@ -226,6 +226,3 @@ Se detalla el token, el tipo y la linea.
 
 Se especifica el token o identificador que ocasiona el error, donde se incluye la línea y columna, y el segmento del código donde se encuentra dicho error.
 
-
-
-* *27/11/2018.*
