@@ -1,0 +1,66 @@
+.root {
+    -fx-base: #1a1b26;
+    -fx-background: #1a1b26;
+    -fx-control-inner-background: #24283b;
+    -fx-accent: #7aa2f7;
+    -fx-default-button: #7aa2f7;
+    -fx-focus-color: #7aa2f7;
+    -fx-faint-focus-color: #7aa2f766;
+    -fx-text-fill: #a9b1d6;
+}
+
+.label {
+    -fx-text-fill: #a9b1d6;
+}
+
+.button {
+    -fx-background-color: #414868;
+    -fx-text-fill: #c0caf5;
+}
+
+.text-area, .text-area .content {
+    -fx-control-inner-background: #24283b;
+    -fx-background-color: #24283b;
+    -fx-text-fill: #a9b1d6;
+    -fx-highlight-fill: #7aa2f7;
+    -fx-highlight-text-fill: #1a1b26;
+}
+
+.table-view {
+    -fx-background-color: #1a1b26;
+    -fx-control-inner-background: #1a1b26;
+    -fx-text-background-color: #a9b1d6;
+    -fx-table-cell-border-color: transparent;
+    -fx-table-header-border-color: #414868;
+}
+
+.table-row-cell {
+    -fx-background-color: #24283b;
+    -fx-text-fill: #c0caf5;
+}
+
+.table-column {
+    -fx-background-color: #1a1b26;
+}
+
+.tab-pane {
+    -fx-background-color: #1a1b26;
+}
+
+.tab {
+    -fx-background-color: #414868;
+    -fx-text-base-color: #c0caf5;
+}
+
+.tab:selected {
+    -fx-background-color: #24283b;
+}
+
+.tab-label {
+    -fx-text-fill: #a9b1d6;
+}
+
+.code-area {
+    -fx-background-color: #1a1b26;
+    -fx-text-fill: #a9b1d6;
+}
