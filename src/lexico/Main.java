@@ -26,6 +26,7 @@ import org.fxmisc.wellbehaved.event.Nodes;
 import org.reactfx.Subscription;
 import semantico.Traductor.Generador;
 import vista.ItemTablaErrores;
+import vista.ItemTablaSimbolos;
 import vista.ItemTablaTokens;
 import vista.LineaToken;
 
@@ -55,8 +56,11 @@ public class Main extends Application implements Cloneable  {
     @FXML public TableColumn<ItemTablaTokens, String> tc_token_id, tc_tipo_token_id, tc_linea_token_id;
     @FXML public TableView<ItemTablaErrores> tv_errores_lexicos_id;
     @FXML public TableColumn<ItemTablaErrores, String> tc_error_id, tc_linea_error_id, tc_tipo_error_id;
+    @FXML public TableView<ItemTablaSimbolos> tv_tabla_simbolos_id;
+    @FXML public TableColumn<ItemTablaSimbolos, String> tc_ts_nombre, tc_ts_tipo, tc_ts_tipodato, tc_ts_ambito, tc_ts_parametros;
     private final ObservableList<ItemTablaTokens> info_tabla_tokens = FXCollections.observableArrayList();
     private final ObservableList<ItemTablaErrores> info_tabla_errores = FXCollections.observableArrayList();
+    private final ObservableList<ItemTablaSimbolos> info_tabla_simbolos = FXCollections.observableArrayList();
 
     @FXML public Button btn_abrir_archivo_id, btn_procesar_id;
 
@@ -197,6 +201,7 @@ public class Main extends Application implements Cloneable  {
         ejecutarAnalizadorSintactico(lexerSintactico);
     }
 
+
     private void ejecutarAnalizadorSintactico(Lexer lexer)
     {
         Syntax syntax = new Syntax(lexer);
@@ -266,6 +271,14 @@ public class Main extends Application implements Cloneable  {
         tc_tipo_error_id.setCellValueFactory(new PropertyValueFactory<>("tipoError"));
         tc_linea_error_id.setCellValueFactory(new PropertyValueFactory<>("linea_error"));
         tv_errores_lexicos_id.setItems(info_tabla_errores);
+
+        // Tabla de Símbolos
+        tc_ts_nombre.setCellValueFactory(new PropertyValueFactory<>("nombre"));
+        tc_ts_tipo.setCellValueFactory(new PropertyValueFactory<>("tipo"));
+        tc_ts_tipodato.setCellValueFactory(new PropertyValueFactory<>("tipoDato"));
+        tc_ts_ambito.setCellValueFactory(new PropertyValueFactory<>("ambito"));
+        tc_ts_parametros.setCellValueFactory(new PropertyValueFactory<>("parametros"));
+        tv_tabla_simbolos_id.setItems(info_tabla_simbolos);
     }
 
     /**
@@ -384,6 +397,7 @@ public class Main extends Application implements Cloneable  {
         tokenslistErrores = new LinkedList<LineaToken>();
         info_tabla_tokens.clear();
         info_tabla_errores.clear();
+        info_tabla_simbolos.clear();
         ta_errores_sintacticos_id.clear();
         ta_errores_semanticos_id.clear();
         //ta_tabla_simbolos_id.clear();
@@ -472,7 +486,38 @@ public class Main extends Application implements Cloneable  {
 
     public void agregarErrorSemantico(String pError) { ta_errores_semanticos_id.appendText(pError + "\n" ); }
 
-    //public void mostrarTablaSimbolos(String texto) { ta_tabla_simbolos_id.appendText(texto + "\n" ); }
+    public void mostrarTablaSimbolos(String texto) {
+        if (texto == null || texto.trim().isEmpty()) {
+            System.out.println("Debug: mostrarTablaSimbolos fue llamado con texto vacío o nulo.");
+            return;
+        }
+
+        Pattern pattern = Pattern.compile("Variable:\\s*(\\w+),\\s*tipo:\\s*(\\w+)");
+
+        String[] simbolos = texto.split("\n");
+        for (String s : simbolos) {
+            String linea = s.trim();
+            if (linea.isEmpty()) {
+                continue;
+            }
+
+            String[] campos = linea.split("\t");
+            if (campos.length == 5) {
+                info_tabla_simbolos.add(new ItemTablaSimbolos(campos[0], campos[1], campos[2], campos[3], campos[4]));
+            } else {
+                // Fallback for the format "Variable: [name], tipo: [type]"
+                Matcher matcher = pattern.matcher(linea);
+                if (matcher.matches()) {
+                    String nombre = matcher.group(1);
+                    String tipoDato = matcher.group(2);
+                    // Assuming default values for other fields
+                    info_tabla_simbolos.add(new ItemTablaSimbolos(nombre, "Variable", tipoDato, "", ""));
+                } else {
+                    System.out.println("Debug: Línea de tabla de símbolos mal formada: " + linea);
+                }
+            }
+        }
+    }
 
     public void agregarCodigoEnsamblador(String pCodigo)
     {

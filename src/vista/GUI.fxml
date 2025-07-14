@@ -77,6 +77,20 @@
                         </AnchorPane>
                     </content>
                 </Tab>
+                <Tab text="Tabla de Símbolos">
+                    <content>
+                        <TableView fx:id="tv_tabla_simbolos_id" prefHeight="428.0" prefWidth="465.0"
+                                   style="-fx-background-color: #3c3f41; -fx-control-inner-background: #3c3f41;">
+                            <columns>
+                                <TableColumn fx:id="tc_ts_nombre" editable="false" prefWidth="100.0" text="Nombre" />
+                                <TableColumn fx:id="tc_ts_tipo" editable="false" prefWidth="100.0" text="Tipo" />
+                                <TableColumn fx:id="tc_ts_tipodato" editable="false" prefWidth="100.0" text="Tipo Dato" />
+                                <TableColumn fx:id="tc_ts_ambito" editable="false" prefWidth="100.0" text="Ámbito" />
+                                <TableColumn fx:id="tc_ts_parametros" editable="false" prefWidth="145.0" text="Parámetros" />
+                            </columns>
+                        </TableView>
+                    </content>
+                </Tab>
 
             </tabs>
         </TabPane>

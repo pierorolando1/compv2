@@ -1,10 +1,18 @@
-program 
+PROGRAM Ejemplo
 
-begin
+VAR
+    contador: INT;
+    mensaje: STRING;
 
-if (1  2) then
 
+FU restar1(): int
+var
+    a: int;
+BEGIN
+    restar1 := 2;
+CK
 
-ck
-
-ck
+BEGIN
+    contador := 10;
+    mensaje := "Hola Mundo";
+CK
