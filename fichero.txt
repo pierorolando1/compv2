@@ -7,10 +7,9 @@ a:int;
 
 begin
 
-a := 1;
-a := "hola";
+a:=1;
+a := 2;
 
 ck
-
 
 

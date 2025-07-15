@@ -216,6 +216,9 @@ public class Main extends Application implements Cloneable  {
                 String valor = simbolo.getValor() != null ? simbolo.getValor().toString() : "";
                 String alcance = "";
                 String secuencia = String.join(", ", simbolo.getSecuenciaDeOperaciones());
+                
+                //print secuencia
+                System.out.println("Secuencia de operaciones para " + nombre + ": " + secuencia);
 
                 if (simbolo instanceof Variable) {
                     Variable var = (Variable) simbolo;
@@ -506,39 +509,76 @@ public class Main extends Application implements Cloneable  {
     }
 
     public void agregarErrorSemantico(String pError) { ta_errores_semanticos_id.appendText(pError + "\n" ); }
+public void mostrarTablaSimbolos(String texto) {
+                if (texto == null || texto.trim().isEmpty()) {
+                    System.out.println("Debug: mostrarTablaSimbolos fue llamado con texto vacío o nulo.");
+                    return;
+                }
 
-    public void mostrarTablaSimbolos(String texto) {
-        if (texto == null || texto.trim().isEmpty()) {
-            System.out.println("Debug: mostrarTablaSimbolos fue llamado con texto vacío o nulo.");
-            return;
-        }
+                Pattern pattern = Pattern.compile("Variable:\\s*(\\w+),\\s*tipo:\\s*(\\w+)");
 
-        Pattern pattern = Pattern.compile("Variable:\\s*(\\w+),\\s*tipo:\\s*(\\w+)");
+                String[] simbolos = texto.split("\n");
+                for (String s : simbolos) {
+                    String linea = s.trim();
+                    if (linea.isEmpty()) {
+                        continue;
+                    }
 
-        String[] simbolos = texto.split("\n");
-        for (String s : simbolos) {
-            String linea = s.trim();
-            if (linea.isEmpty()) {
-                continue;
-            }
+                    String[] campos = linea.split("\t");
+                    if (campos.length >= 5) {
+                        // Join all fields from index 4 onwards as the sequence field
+                        String secuencia = "";
+                        if (campos.length > 5) {
+                            StringBuilder secBuilder = new StringBuilder();
+                            for (int i = 5; i < campos.length; i++) {
+                                if (i > 5) secBuilder.append("\t");
+                                secBuilder.append(campos[i]);
+                            }
+                            // Parse the sequence to extract the flow: "null -> 1 -> 2"
+                            String fullSequence = campos[4] + "\t" + secBuilder.toString();
+                            secuencia = parseSequenceFlow(fullSequence);
+                        } else {
+                            secuencia = parseSequenceFlow(campos[4]);
+                        }
 
-            String[] campos = linea.split("\t");
-            if (campos.length == 5) {
-                info_tabla_simbolos.add(new ItemTablaSimbolos(campos[0], campos[1], campos[2], campos[3], campos[4]));
-            } else {
-                // Fallback for the format "Variable: [name], tipo: [type]"
-                Matcher matcher = pattern.matcher(linea);
-                if (matcher.matches()) {
-                    String nombre = matcher.group(1);
-                    String tipoDato = matcher.group(2);
-                    // Assuming default values for other fields
-                    info_tabla_simbolos.add(new ItemTablaSimbolos(nombre, "Variable", tipoDato, "", ""));
-                } else {
-                    System.out.println("Debug: Línea de tabla de símbolos mal formada: " + linea);
+                        info_tabla_simbolos.add(new ItemTablaSimbolos(campos[0], campos[1], campos[2], campos[3], secuencia));
+                    } else {
+                        // Fallback for the format "Variable: [name], tipo: [type]"
+                        Matcher matcher = pattern.matcher(linea);
+                        if (matcher.matches()) {
+                            String nombre = matcher.group(1);
+                            String tipoDato = matcher.group(2);
+                            // Assuming default values for other fields
+                            info_tabla_simbolos.add(new ItemTablaSimbolos(nombre, "Variable", tipoDato, "", ""));
+                        } else {
+                            System.out.println("Debug: Línea de tabla de símbolos mal formada: " + linea);
+                        }
+                    }
                 }
             }
-        }
-    }
+
+            private String parseSequenceFlow(String sequence) {
+                // Extract values from assignments like "Asignación := 1: null -> 1, Asignación := 2: 1 -> 2"
+                Pattern assignPattern = Pattern.compile("\\d+:\\s*([^,]+)");
+                Matcher matcher = assignPattern.matcher(sequence);
+
+                StringBuilder flow = new StringBuilder();
+                while (matcher.find()) {
+                    String assignment = matcher.group(1).trim();
+                    if (flow.length() > 0) {
+                        // Extract the final value from previous assignment and initial value from current
+                        String[] parts = assignment.split("\\s*->\\s*");
+                        if (parts.length == 2) {
+                            flow.append(" -> ").append(parts[1]);
+                        }
+                    } else {
+                        // First assignment, include both parts
+                        flow.append(assignment);
+                    }
+                }
+
+                return flow.toString();
+            }
 
     public void agregarCodigoEnsamblador(String pCodigo)
     {

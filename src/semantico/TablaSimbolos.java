@@ -469,7 +469,14 @@ public class TablaSimbolos {
     public void incrementarVariable(String nombreVariable, Object incremento, boolean esPostIncremento, String ambito) {
         Variable variable = getVariableEnTabla(nombreVariable, ambito);
         if(variable != null) {
-            variable.incrementar(incremento, esPostIncremento);
+            TipoDato tipoVariable = variable.getTipoDato();
+            // Solo permitir incremento en variables numéricas
+            boolean tipoNumerico = (tipoVariable == TipoDato.INT || tipoVariable == TipoDato.SHORTINT || 
+                                  tipoVariable == TipoDato.LONGINT || tipoVariable == TipoDato.REAL);
+            
+            if(tipoNumerico) {
+                variable.incrementar(incremento, esPostIncremento);
+            }
         }
     }
 
@@ -483,7 +490,14 @@ public class TablaSimbolos {
     public void decrementarVariable(String nombreVariable, Object decremento, boolean esPostDecremento, String ambito) {
         Variable variable = getVariableEnTabla(nombreVariable, ambito);
         if(variable != null) {
-            variable.decrementar(decremento, esPostDecremento);
+            TipoDato tipoVariable = variable.getTipoDato();
+            // Solo permitir decremento en variables numéricas
+            boolean tipoNumerico = (tipoVariable == TipoDato.INT || tipoVariable == TipoDato.SHORTINT || 
+                                  tipoVariable == TipoDato.LONGINT || tipoVariable == TipoDato.REAL);
+            
+            if(tipoNumerico) {
+                variable.decrementar(decremento, esPostDecremento);
+            }
         }
     }
 
@@ -509,31 +523,42 @@ public class TablaSimbolos {
      */
     public void aplicarOperacionAritmetica(String nombreVariable, String operador, Object valor, String ambito) {
         Variable variable = getVariableEnTabla(nombreVariable, ambito);
-        if(variable != null && variable.getValor() instanceof Number && valor instanceof Number) {
-            double valorActual = ((Number) variable.getValor()).doubleValue();
-            double operando = ((Number) valor).doubleValue();
-            double nuevoValor = valorActual;
+        if(variable != null) {
+            TipoDato tipoVariable = variable.getTipoDato();
+            TipoDato tipoValor = obtenerTipoValor(valor);
             
-            switch(operador) {
-                case "+=":
-                    nuevoValor = valorActual + operando;
-                    break;
-                case "-=":
-                    nuevoValor = valorActual - operando;
-                    break;
-                case "*=":
-                    nuevoValor = valorActual * operando;
-                    break;
-                case "/=":
-                    if(operando != 0) {
-                        nuevoValor = valorActual / operando;
-                    }
-                    break;
+            // Verificar que ambos tipos sean numéricos y compatibles
+            boolean tipoVariableNumerico = (tipoVariable == TipoDato.INT || tipoVariable == TipoDato.SHORTINT || 
+                                          tipoVariable == TipoDato.LONGINT || tipoVariable == TipoDato.REAL);
+            boolean tipoValorNumerico = (tipoValor == TipoDato.INT || tipoValor == TipoDato.SHORTINT || 
+                                       tipoValor == TipoDato.LONGINT || tipoValor == TipoDato.REAL);
+            
+            if(tipoVariableNumerico && tipoValorNumerico && variable.getValor() instanceof Number && valor instanceof Number) {
+                double valorActual = ((Number) variable.getValor()).doubleValue();
+                double operando = ((Number) valor).doubleValue();
+                double nuevoValor = valorActual;
+                
+                switch(operador) {
+                    case "+=":
+                        nuevoValor = valorActual + operando;
+                        break;
+                    case "-=":
+                        nuevoValor = valorActual - operando;
+                        break;
+                    case "*=":
+                        nuevoValor = valorActual * operando;
+                        break;
+                    case "/=":
+                        if(operando != 0) {
+                            nuevoValor = valorActual / operando;
+                        }
+                        break;
+                }
+                
+                String descripcion = String.format("Operación %s %s: %s -> %s", 
+                    operador, valor, valorActual, nuevoValor);
+                variable.asignarValor(nuevoValor, descripcion);
             }
-            
-            String descripcion = String.format("Operación %s %s: %s -> %s", 
-                operador, valor, valorActual, nuevoValor);
-            variable.asignarValor(nuevoValor, descripcion);
         }
     }
 
@@ -564,6 +589,89 @@ public class TablaSimbolos {
             String descripcion = String.format("Asignación := %s (evaluado de: %s)", valorEvaluado, expresionOriginal);
             variable.asignarValor(valorEvaluado, descripcion);
         }
+    }
+
+    /**
+     * Obtiene el tipo de dato de un valor
+     * @param valor El valor a analizar
+     * @return TipoDato correspondiente al valor
+     */
+    public TipoDato obtenerTipoValor(Object valor) {
+        if (valor instanceof Integer || valor instanceof Long) {
+            return TipoDato.INT;
+        } else if (valor instanceof Double || valor instanceof Float) {
+            return TipoDato.REAL;
+        } else if (valor instanceof String) {
+            return TipoDato.STRING;
+        } else if (valor instanceof Boolean) {
+            return TipoDato.BOOLEAN;
+        } else if (valor instanceof Character) {
+            return TipoDato.CHAR;
+        }
+        return null; // Tipo desconocido
+    }
+
+    /**
+     * Verifica si dos tipos son compatibles para asignación
+     * @param tipoVariable Tipo de la variable de destino
+     * @param tipoValor Tipo del valor a asignar
+     * @return true si son compatibles, false si no
+     */
+    public boolean sonTiposCompatibles(TipoDato tipoVariable, TipoDato tipoValor) {
+        if (tipoVariable == null || tipoValor == null) {
+            return false;
+        }
+        
+        // Tipos idénticos son siempre compatibles
+        if (tipoVariable == tipoValor) {
+            return true;
+        }
+        
+        // Conversiones numéricas permitidas
+        if ((tipoVariable == TipoDato.REAL) && 
+            (tipoValor == TipoDato.INT || tipoValor == TipoDato.SHORTINT || tipoValor == TipoDato.LONGINT)) {
+            return true;
+        }
+        
+        if ((tipoVariable == TipoDato.LONGINT) && 
+            (tipoValor == TipoDato.INT || tipoValor == TipoDato.SHORTINT)) {
+            return true;
+        }
+        
+        if ((tipoVariable == TipoDato.INT) && (tipoValor == TipoDato.SHORTINT)) {
+            return true;
+        }
+        
+        return false;
+    }
+
+    /**
+     * Valida y asigna un valor a una variable verificando compatibilidad de tipos
+     * @param nombreVariable Nombre de la variable
+     * @param valor Valor a asignar
+     * @param operacion Descripción de la operación
+     * @param ambito Ámbito de la variable
+     * @param fila Línea donde ocurre la asignación
+     * @param columna Columna donde ocurre la asignación
+     * @return true si la asignación es válida, false si hay error de tipo
+     */
+    public boolean validarYAsignarValor(String nombreVariable, Object valor, String operacion, String ambito, int fila, int columna) {
+        Variable variable = getVariableEnTabla(nombreVariable, ambito);
+        if (variable == null) {
+            return false; // Variable no existe - otro tipo de error
+        }
+        
+        TipoDato tipoVariable = variable.getTipoDato();
+        TipoDato tipoValor = obtenerTipoValor(valor);
+        
+        if (!sonTiposCompatibles(tipoVariable, tipoValor)) {
+            // Error de tipo - generar error semántico
+            return false;
+        }
+        
+        // Tipos compatibles - realizar asignación
+        variable.asignarValor(valor, operacion);
+        return true;
     }
 
     /**
