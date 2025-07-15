@@ -1,18 +1,16 @@
-PROGRAM Ejemplo
+program main
 
-VAR
-    contador: INT;
-    mensaje: STRING;
-
-
-FU restar1(): int
 var
-    a: int;
-BEGIN
-    restar1 := 2;
-CK
 
-BEGIN
-    contador := 10;
-    mensaje := "Hola Mundo";
-CK
+a:int;
+
+
+begin
+
+a := 1;
+a := "hola";
+
+ck
+
+
+

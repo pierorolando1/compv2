@@ -21,6 +21,19 @@ public class Funcion extends Simbolo {
         this.tipoRetorno = tipoRetorno;
     }
 
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("funcion(");
+        for (int i = 0; i < parametros.size(); i++) {
+            sb.append(parametros.get(i).getTipoDato().name().toLowerCase());
+            if (i < parametros.size() - 1) {
+                sb.append(", ");
+            }
+        }
+        sb.append(")");
+        return sb.toString();
+    }
 
     //GETTERS Y SETTERS
 

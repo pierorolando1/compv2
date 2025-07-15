@@ -57,7 +57,7 @@ public class Main extends Application implements Cloneable  {
     @FXML public TableView<ItemTablaErrores> tv_errores_lexicos_id;
     @FXML public TableColumn<ItemTablaErrores, String> tc_error_id, tc_linea_error_id, tc_tipo_error_id;
     @FXML public TableView<ItemTablaSimbolos> tv_tabla_simbolos_id;
-    @FXML public TableColumn<ItemTablaSimbolos, String> tc_ts_nombre, tc_ts_tipo, tc_ts_tipodato, tc_ts_ambito, tc_ts_parametros;
+    @FXML public TableColumn<ItemTablaSimbolos, String> tc_ts_nombre, tc_ts_tipo, tc_ts_valor, tc_ts_alcance, tc_ts_secuencia;
     private final ObservableList<ItemTablaTokens> info_tabla_tokens = FXCollections.observableArrayList();
     private final ObservableList<ItemTablaErrores> info_tabla_errores = FXCollections.observableArrayList();
     private final ObservableList<ItemTablaSimbolos> info_tabla_simbolos = FXCollections.observableArrayList();
@@ -201,19 +201,43 @@ public class Main extends Application implements Cloneable  {
         ejecutarAnalizadorSintactico(lexerSintactico);
     }
 
-
     private void ejecutarAnalizadorSintactico(Lexer lexer)
     {
-        Syntax syntax = new Syntax(lexer);
-
         try {
-            syntax.parse();
+            sintactico.Syntax parser = new sintactico.Syntax(lexer);
+            parser.parse();
+            //ta_errores_sintacticos_id.setText(parser.getErrors());
+            //ta_errores_semanticos_id.setText(parser.getSemanticErrors());
 
+            info_tabla_simbolos.clear();
+            for (Simbolo simbolo : TablaSimbolos.tablaSimbolos) {
+                String nombre = simbolo.getNombre();
+                String tipo = "";
+                String valor = simbolo.getValor() != null ? simbolo.getValor().toString() : "";
+                String alcance = "";
+                String secuencia = String.join(", ", simbolo.getSecuenciaDeOperaciones());
 
-        } catch (Exception e) {
-            e.printStackTrace();
+                if (simbolo instanceof Variable) {
+                    Variable var = (Variable) simbolo;
+                    if (var.getTipoDato() != null) {
+                        tipo = var.getTipoDato().name().toLowerCase();
+                    }
+                    alcance = var.getAmbito();
+                } else if (simbolo instanceof Funcion) {
+                    Funcion fun = (Funcion) simbolo;
+                    tipo = fun.toString();
+                    alcance = "global";
+                }
+
+                info_tabla_simbolos.add(new ItemTablaSimbolos(nombre, tipo, valor, alcance, secuencia));
+            }
+
+        } catch (Exception ex) {
+            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
+
+
 
     @FXML
     void initialize(){
@@ -260,24 +284,21 @@ public class Main extends Application implements Cloneable  {
      */
     private void initTablesViews()
     {
-        // Tokens
         tc_token_id.setCellValueFactory(new PropertyValueFactory<>("token"));
         tc_tipo_token_id.setCellValueFactory(new PropertyValueFactory<>("tipoToken"));
         tc_linea_token_id.setCellValueFactory(new PropertyValueFactory<>("linea"));
         tv_tokens_encontrados_id.setItems(info_tabla_tokens);
 
-        // Errores
-        tc_error_id.setCellValueFactory(new PropertyValueFactory<>("error"));
+        tc_error_id.setCellValueFactory(new PropertyValueFactory<>("token"));
         tc_tipo_error_id.setCellValueFactory(new PropertyValueFactory<>("tipoError"));
-        tc_linea_error_id.setCellValueFactory(new PropertyValueFactory<>("linea_error"));
+        tc_linea_error_id.setCellValueFactory(new PropertyValueFactory<>("linea"));
         tv_errores_lexicos_id.setItems(info_tabla_errores);
 
-        // Tabla de Símbolos
         tc_ts_nombre.setCellValueFactory(new PropertyValueFactory<>("nombre"));
         tc_ts_tipo.setCellValueFactory(new PropertyValueFactory<>("tipo"));
-        tc_ts_tipodato.setCellValueFactory(new PropertyValueFactory<>("tipoDato"));
-        tc_ts_ambito.setCellValueFactory(new PropertyValueFactory<>("ambito"));
-        tc_ts_parametros.setCellValueFactory(new PropertyValueFactory<>("parametros"));
+        tc_ts_valor.setCellValueFactory(new PropertyValueFactory<>("valor"));
+        tc_ts_alcance.setCellValueFactory(new PropertyValueFactory<>("alcance"));
+        tc_ts_secuencia.setCellValueFactory(new PropertyValueFactory<>("secuenciaDeOperaciones"));
         tv_tabla_simbolos_id.setItems(info_tabla_simbolos);
     }
 

@@ -1,4 +1,2 @@
-mensaje db ?
-
-contador dw ?
+a dw ?
 

@@ -6,16 +6,16 @@ public class ItemTablaSimbolos {
 
     private final SimpleStringProperty nombre;
     private final SimpleStringProperty tipo;
-    private final SimpleStringProperty tipoDato;
-    private final SimpleStringProperty ambito;
-    private final SimpleStringProperty parametros;
+    private final SimpleStringProperty valor;
+    private final SimpleStringProperty alcance;
+    private final SimpleStringProperty secuenciaDeOperaciones;
 
-    public ItemTablaSimbolos(String nombre, String tipo, String tipoDato, String ambito, String parametros) {
+    public ItemTablaSimbolos(String nombre, String tipo, String valor, String alcance, String secuenciaDeOperaciones) {
         this.nombre = new SimpleStringProperty(nombre);
         this.tipo = new SimpleStringProperty(tipo);
-        this.tipoDato = new SimpleStringProperty(tipoDato);
-        this.ambito = new SimpleStringProperty(ambito);
-        this.parametros = new SimpleStringProperty(parametros);
+        this.valor = new SimpleStringProperty(valor);
+        this.alcance = new SimpleStringProperty(alcance);
+        this.secuenciaDeOperaciones = new SimpleStringProperty(secuenciaDeOperaciones);
     }
 
     public String getNombre() {
@@ -42,39 +42,39 @@ public class ItemTablaSimbolos {
         this.tipo.set(tipo);
     }
 
-    public String getTipoDato() {
-        return tipoDato.get();
+    public String getValor() {
+        return valor.get();
     }
 
-    public SimpleStringProperty tipoDatoProperty() {
-        return tipoDato;
+    public SimpleStringProperty valorProperty() {
+        return valor;
     }
 
-    public void setTipoDato(String tipoDato) {
-        this.tipoDato.set(tipoDato);
+    public void setValor(String valor) {
+        this.valor.set(valor);
     }
 
-    public String getAmbito() {
-        return ambito.get();
+    public String getAlcance() {
+        return alcance.get();
     }
 
-    public SimpleStringProperty ambitoProperty() {
-        return ambito;
+    public SimpleStringProperty alcanceProperty() {
+        return alcance;
     }
 
-    public void setAmbito(String ambito) {
-        this.ambito.set(ambito);
+    public void setAlcance(String alcance) {
+        this.alcance.set(alcance);
     }
 
-    public String getParametros() {
-        return parametros.get();
+    public String getSecuenciaDeOperaciones() {
+        return secuenciaDeOperaciones.get();
     }
 
-    public SimpleStringProperty parametrosProperty() {
-        return parametros;
+    public SimpleStringProperty secuenciaDeOperacionesProperty() {
+        return secuenciaDeOperaciones;
     }
 
-    public void setParametros(String parametros) {
-        this.parametros.set(parametros);
+    public void setSecuenciaDeOperaciones(String secuenciaDeOperaciones) {
+        this.secuenciaDeOperaciones.set(secuenciaDeOperaciones);
     }
 }

@@ -5,11 +5,10 @@
  */
 package semantico;
 
-import org.reactfx.value.Var;
-
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.LinkedList;
+import java.util.List;
 
 /**
  *
@@ -17,10 +16,10 @@ import java.util.LinkedList;
  */
 public class TablaSimbolos {
 
-    static ArrayList<Simbolo> tablaSimbolos = new ArrayList();
+    public static ArrayList<Simbolo> tablaSimbolos = new ArrayList<>();
 
     //pila que almacena todos los tipos de datos que se definen (algunos deben ser desechados cuando hay error)
-    private Deque<TipoDato> tiposDato = new LinkedList();
+    private Deque<TipoDato> tiposDato = new LinkedList<>();
 
     //contiene todas las variables EN ORDEN SECUENCIAL
     public ArrayList<Variable> variables;
@@ -41,7 +40,7 @@ public class TablaSimbolos {
 
     public TablaSimbolos()
     {
-        tablaSimbolos = new ArrayList();
+        tablaSimbolos = new ArrayList<>();
 
         variables = new ArrayList<>();
         pilaVariablesSinTipo = new LinkedList<>();
@@ -78,8 +77,8 @@ public class TablaSimbolos {
             for(int i=0; i<tablaSimbolos.size(); i++){
                 auxSimbolo = tablaSimbolos.get(i);
                 if(auxSimbolo instanceof Variable){
-                    if(auxSimbolo.identificador.equals(aux.identificador) &&
-                        auxSimbolo.ambito.equals(aux.ambito))
+                    if(auxSimbolo.getNombre().equals(aux.getNombre()) &&
+                        auxSimbolo.getAmbito().equals(aux.getAmbito()))
                         return true;
                 }
             }
@@ -96,7 +95,7 @@ public class TablaSimbolos {
                     aux = (Funcion)auxSimbolo;
                     cantidadIguales = 0;
 
-                    if(aux.identificador.equals(funcion.identificador) &&
+                    if(aux.getNombre().equals(funcion.getNombre()) &&
                             aux.getParametros().size() == funcion.getParametros().size()){
 
                         for(int j=0; j<funcion.getParametros().size(); j++){
@@ -104,7 +103,7 @@ public class TablaSimbolos {
                             Variable varFuncion = funcion.getParametros().get(j);
 
                             //si en algún momento difieren los parámetros
-                            if(varAux.getTipo() != varFuncion.getTipo()){
+                            if(varAux.getTipoDato() != varFuncion.getTipoDato()){
                                 break;
                             }
                             cantidadIguales++;
@@ -121,6 +120,7 @@ public class TablaSimbolos {
         return false; //en realidad nunca va a llegar aquí pero yolo
     }
 
+
     /**
      * Verifica si un identificador existe dentro de las variables en la tabla de símbolos
      * @param identificador Nombre de la variable
@@ -130,8 +130,8 @@ public class TablaSimbolos {
     public boolean existeVariable(String identificador, String ambito){
         for(Simbolo s : tablaSimbolos){
             if(s instanceof Variable){
-                if(s.identificador.equals(identificador) &&
-                        (s.ambito.equals("Global") || s.ambito.equals(ambito))){
+                if(s.getNombre().equals(identificador) &&
+                        (s.getAmbito().equals("Global") || s.getAmbito().equals(ambito))){
                     return true;
                 }
             }
@@ -232,7 +232,7 @@ public class TablaSimbolos {
      */
     public void agregarVariableSinTipo(String identificador, int fila, int columna){
         Variable var = new Variable();
-        var.identificador = identificador;
+        var.setNombre(identificador);
         var.setFila(fila+1);
         var.setColumna(columna);
 
@@ -249,7 +249,7 @@ public class TablaSimbolos {
         //Le da prioridad a las variables del ámbito
         for(Simbolo s : tablaSimbolos){
             if(s instanceof Variable &&
-                    s.identificador.equals(nombreVariable) && s.ambito.equals(ambito)){
+                    s.getNombre().equals(nombreVariable) && s.getAmbito().equals(ambito)){
                 return (Variable) s;
             }
         }
@@ -257,12 +257,22 @@ public class TablaSimbolos {
         //Si no la encuentra en el ámbito, busca en las globales
         for(Simbolo s : tablaSimbolos){
             if(s instanceof Variable &&
-                    s.identificador.equals(nombreVariable) && s.ambito.equals("Global")){
+                    s.getNombre().equals(nombreVariable) && s.getAmbito().equals("Global")){
                 return (Variable) s;
             }
         }
 
         return null;
+    }
+
+    /**
+     * Alias público para getVariable que es usado por otros métodos
+     * @param nombreVariable Identificador de la variable
+     * @param ambito Ámbito en el que se quiere la variable
+     * @return Variable si la encuentra, null si no la encuentra
+     */
+    public Variable getVariableEnTabla(String nombreVariable, String ambito){
+        return getVariable(nombreVariable, ambito);
     }
 
 
@@ -288,8 +298,8 @@ public class TablaSimbolos {
      */
     public void agregarParametro(String identificador, int fila, int columna){
         Variable parametro = new Variable();
-        parametro.setIdentificador(identificador);
-        parametro.setTipo(tiposDato.pollLast());
+        parametro.setNombre(identificador);
+        parametro.setTipoDato(tiposDato.pollLast());
         parametro.setFila(fila);
         parametro.setColumna(columna);
 
@@ -309,7 +319,7 @@ public class TablaSimbolos {
             for(int j=i+1; j<parametros.size(); j++){
                 param2 = parametros.get(j);
 
-                if(param1.identificador.equals(param2.identificador) &&
+                if(param1.getNombre().equals(param2.getNombre()) &&
                         !erroneos.contains(param2)
                 ){
                     erroneos.add(param2);
@@ -358,7 +368,7 @@ public class TablaSimbolos {
 
         for(int i=0; i<tablaSimbolos.size(); i++){
             if(tablaSimbolos.get(i) instanceof Funcion &&
-                    tablaSimbolos.get(i).identificador.equals(identificador)){
+                    tablaSimbolos.get(i).getNombre().equals(identificador)){
                 funcionLlamada = (Funcion)tablaSimbolos.get(i);
 
                 if(parametrosLlamada.size() == funcionLlamada.getParametros().size()){
@@ -369,13 +379,13 @@ public class TablaSimbolos {
 
                         if(param instanceof String){    //Es una variable
                             Variable var = getVariable(param.toString(), identificador);
-                            if((var == null) || (var.getTipo() != paramFuncion.getTipo())){
+                            if((var == null) || (var.getTipoDato() != paramFuncion.getTipoDato())){
                                 iguales = false;
                                 break;
                             }
                         }
                         else if(param instanceof TipoDato){
-                            if(param != paramFuncion.getTipo()){
+                            if(param != paramFuncion.getTipoDato()){
                                 iguales = false;
                                 break;
                             }
@@ -410,7 +420,7 @@ public class TablaSimbolos {
     public void agregarTipoDato(TipoDato tipoDato){
         if(variablesSinTipo.size() != 0){
             for(Variable var : variablesSinTipo){
-                var.setTipo(tipoDato);
+                var.setTipoDato(tipoDato);
             }
 
             pilaVariablesSinTipo.add(variablesSinTipo);
@@ -436,6 +446,127 @@ public class TablaSimbolos {
     }
 
     /**
+     * Actualiza el valor de una variable en la tabla de símbolos
+     * @param nombreVariable Nombre de la variable
+     * @param valor Nuevo valor de la variable
+     * @param operacion Operación realizada (ej: "= 5", "+= 2", "++")
+     * @param ambito Ámbito de la variable
+     */
+    public void actualizarValorVariable(String nombreVariable, Object valor, String operacion, String ambito){
+        Variable variable = getVariableEnTabla(nombreVariable, ambito);
+        if(variable != null){
+            variable.asignarValor(valor, operacion);
+        }
+    }
+
+    /**
+     * Incrementa el valor de una variable
+     * @param nombreVariable Nombre de la variable
+     * @param incremento Valor a incrementar
+     * @param esPostIncremento true si es post-incremento (var++), false si es pre-incremento (++var)
+     * @param ambito Ámbito de la variable
+     */
+    public void incrementarVariable(String nombreVariable, Object incremento, boolean esPostIncremento, String ambito) {
+        Variable variable = getVariableEnTabla(nombreVariable, ambito);
+        if(variable != null) {
+            variable.incrementar(incremento, esPostIncremento);
+        }
+    }
+
+    /**
+     * Decrementa el valor de una variable
+     * @param nombreVariable Nombre de la variable
+     * @param decremento Valor a decrementar
+     * @param esPostDecremento true si es post-decremento (var--), false si es pre-decremento (--var)
+     * @param ambito Ámbito de la variable
+     */
+    public void decrementarVariable(String nombreVariable, Object decremento, boolean esPostDecremento, String ambito) {
+        Variable variable = getVariableEnTabla(nombreVariable, ambito);
+        if(variable != null) {
+            variable.decrementar(decremento, esPostDecremento);
+        }
+    }
+
+    /**
+     * Inicializa una variable con un valor inicial
+     * @param nombreVariable Nombre de la variable
+     * @param valorInicial Valor inicial de la variable
+     * @param ambito Ámbito de la variable
+     */
+    public void inicializarVariable(String nombreVariable, Object valorInicial, String ambito) {
+        Variable variable = getVariableEnTabla(nombreVariable, ambito);
+        if(variable != null) {
+            variable.inicializar(valorInicial);
+        }
+    }
+
+    /**
+     * Aplica una operación aritmética sobre una variable
+     * @param nombreVariable Nombre de la variable
+     * @param operador Operador (+=, -=, *=, /=)
+     * @param valor Valor de la operación
+     * @param ambito Ámbito de la variable
+     */
+    public void aplicarOperacionAritmetica(String nombreVariable, String operador, Object valor, String ambito) {
+        Variable variable = getVariableEnTabla(nombreVariable, ambito);
+        if(variable != null && variable.getValor() instanceof Number && valor instanceof Number) {
+            double valorActual = ((Number) variable.getValor()).doubleValue();
+            double operando = ((Number) valor).doubleValue();
+            double nuevoValor = valorActual;
+            
+            switch(operador) {
+                case "+=":
+                    nuevoValor = valorActual + operando;
+                    break;
+                case "-=":
+                    nuevoValor = valorActual - operando;
+                    break;
+                case "*=":
+                    nuevoValor = valorActual * operando;
+                    break;
+                case "/=":
+                    if(operando != 0) {
+                        nuevoValor = valorActual / operando;
+                    }
+                    break;
+            }
+            
+            String descripcion = String.format("Operación %s %s: %s -> %s", 
+                operador, valor, valorActual, nuevoValor);
+            variable.asignarValor(nuevoValor, descripcion);
+        }
+    }
+
+    /**
+     * Asigna un valor específico a una variable (para asignaciones directas como a := 1)
+     * @param nombreVariable Nombre de la variable
+     * @param valor Valor a asignar (número, string, boolean, etc.)
+     * @param ambito Ámbito de la variable
+     */
+    public void asignarValorDirecto(String nombreVariable, Object valor, String ambito) {
+        Variable variable = getVariableEnTabla(nombreVariable, ambito);
+        if(variable != null) {
+            String descripcion = String.format("Asignación directa := %s", valor);
+            variable.asignarValor(valor, descripcion);
+        }
+    }
+
+    /**
+     * Asigna un valor expresión evaluada a una variable
+     * @param nombreVariable Nombre de la variable
+     * @param valorEvaluado Valor ya evaluado de la expresión
+     * @param expresionOriginal String original de la expresión para referencia
+     * @param ambito Ámbito de la variable
+     */
+    public void asignarValorExpresion(String nombreVariable, Object valorEvaluado, String expresionOriginal, String ambito) {
+        Variable variable = getVariableEnTabla(nombreVariable, ambito);
+        if(variable != null) {
+            String descripcion = String.format("Asignación := %s (evaluado de: %s)", valorEvaluado, expresionOriginal);
+            variable.asignarValor(valorEvaluado, descripcion);
+        }
+    }
+
+    /**
      * Define un string con toda la información existente en la tabla de símbolos
      * @return String con la información de todos los símbolos
      */
@@ -443,23 +574,46 @@ public class TablaSimbolos {
         String msj = "";
         for(Simbolo s : tablaSimbolos){
             if(s instanceof Variable){
-                msj += "Variable: " + s.identificador + ", tipo: " + ((Variable) s).getTipo() + "\n";
+                Variable var = (Variable) s;
+                String valor = var.getValor() != null ? var.getValor().toString() : "sin valor";
+                
+                // Si el valor es "expresión", intentar obtener un valor más descriptivo
+                if("expresión".equals(valor) && !var.getSecuenciaDeOperaciones().isEmpty()) {
+                    // Buscar en la secuencia de operaciones el valor real asignado
+                    List<String> operaciones = var.getSecuenciaDeOperaciones();
+                    String ultimaOperacion = operaciones.get(operaciones.size() - 1);
+                    
+                    // Extraer el valor de la operación (formato: "Operación: valorAnterior -> valorNuevo")
+                    if(ultimaOperacion.contains(" -> ")) {
+                        String[] partes = ultimaOperacion.split(" -> ");
+                        if(partes.length > 1) {
+                            valor = partes[1].trim();
+                        }
+                    }
+                }
+                
+                String secuencia = var.getSecuenciaDeOperaciones().isEmpty() ? 
+                                 "sin operaciones" : 
+                                 String.join(", ", var.getSecuenciaDeOperaciones());
+                
+                msj += var.getNombre() + "\t" + 
+                       "Variable" + "\t" + 
+                       var.getTipoDato() + "\t" + 
+                       valor + "\t" + 
+                       var.getAmbito() + "\t" + 
+                       secuencia + "\n";
             }
             else if(s instanceof Funcion){
-                if(((Funcion) s).getTipoRetorno() == null)  //Es procedimiento
-                    msj += "Procedimiento: " + s.identificador + "\n";
-                else                                        //Es funcion
-                    msj += "Función: " + s.identificador + ", tipo de retorno: " + ((Funcion) s).getTipoRetorno()  + "\n";
-
-                ArrayList<Variable> params = ((Funcion) s).getParametros();
-                msj += "\tCantidad de parámetros: " + params.size() + "\n";
-                if(params.size() != 0){
-                    msj += "\tParámetros: ";
-                    for(Variable v : params){
-                        msj += v.identificador + ": " + v.getTipo() + ", ";
-                    }
-                    msj = msj.substring(0, msj.length()-2) + ".\n";
-                }
+                Funcion func = (Funcion) s;
+                String tipo = func.getTipoRetorno() == null ? "Procedimiento" : "Función";
+                String tipoRetorno = func.getTipoRetorno() == null ? "-" : func.getTipoRetorno().toString();
+                
+                msj += func.getNombre() + "\t" + 
+                       tipo + "\t" + 
+                       tipoRetorno + "\t" + 
+                       "-" + "\t" + 
+                       func.getAmbito() + "\t" + 
+                       "Parámetros: " + func.getParametros().size() + "\n";
             }
         }
 

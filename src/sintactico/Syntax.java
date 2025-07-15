@@ -644,10 +644,10 @@ public class Syntax extends java_cup.runtime.lr_parser {
     {
         String msg = "Error en la línea "+ simbolo.getFila() + ", columna "+ simbolo.getColumna() +". Ya existe ";
         if(simbolo instanceof Variable){
-            msg += "la variable '" + simbolo.getIdentificador() + "' en el ámbito " + simbolo.getAmbito();
+            msg += "la variable '" + simbolo.getNombre() + "' en el ámbito " + simbolo.getAmbito();
         }
         else if(simbolo instanceof Funcion){
-            msg += "la funcion o procedimiento '" + simbolo.getIdentificador() + "' con los mismos parámetros";
+            msg += "la funcion o procedimiento '" + simbolo.getNombre() + "' con los mismos parámetros";
         }
 
         huboErrores = true;
@@ -687,8 +687,8 @@ public class Syntax extends java_cup.runtime.lr_parser {
             for(int i=0; i<tamanoVariablesUsadas; i++){
                 Variable var = tablaSimbolos.variablesUsadas.get(i);
 
-                if(!tablaSimbolos.existeVariable(var.getIdentificador(), ambito.toString())){
-                    ErrorSemantico("variable", var.getIdentificador(), var.getFila(), var.getColumna());
+                if(!tablaSimbolos.existeVariable(var.getNombre(), ambito.toString())){
+                    ErrorSemantico("variable", var.getNombre(), var.getFila(), var.getColumna());
                 }
             }
         }
@@ -702,14 +702,14 @@ public class Syntax extends java_cup.runtime.lr_parser {
                 }else{
                     boolean existeParametro = false;
                     for(Variable v : fun.getParametros()){
-                        if(var.getIdentificador().equals(v.getIdentificador())){
+                        if(var.getNombre().equals(v.getNombre())){
                             existeParametro = true;
                             break;
                         }
                     }
                     if(!existeParametro &&
-                        !tablaSimbolos.existeVariable(var.getIdentificador(), fun.getIdentificador())){
-                        ErrorSemantico("variable", var.getIdentificador(), var.getFila(), var.getColumna());
+                        !tablaSimbolos.existeVariable(var.getNombre(), fun.getNombre())){
+                        ErrorSemantico("variable", var.getNombre(), var.getFila(), var.getColumna());
                     }
                 }
             }
@@ -721,8 +721,8 @@ public class Syntax extends java_cup.runtime.lr_parser {
 
         Variable var = tablaSimbolos.variablesUsadas.get( tablaSimbolos.variablesUsadas.size()-1 );
 
-        if(!var.getIdentificador().equals(funcion.getIdentificador())){
-            ErrorSemantico("retorno", var.getIdentificador(), var.getFila(), var.getColumna());
+        if(!var.getNombre().equals(funcion.getNombre())){
+            ErrorSemantico("retorno", var.getNombre(), var.getFila(), var.getColumna());
             return false;
         }
         return true;
@@ -730,7 +730,7 @@ public class Syntax extends java_cup.runtime.lr_parser {
 
     public boolean existeParametro(Funcion funcion, String identificador){
         for(Variable v : funcion.getParametros()){
-            if(v.getIdentificador().equals(identificador)){
+            if(v.getNombre().equals(identificador)){
                 return true;
             }
         }
@@ -743,7 +743,7 @@ public class Syntax extends java_cup.runtime.lr_parser {
         ArrayList<Variable> errores = tablaSimbolos.getParametrosErroneos();
         if(errores != null){
             for(Variable v : errores)
-                ErrorSemantico("parametro", v.getIdentificador(), v.getFila(), v.getColumna());
+                ErrorSemantico("parametro", v.getNombre(), v.getFila(), v.getColumna());
             //para que no quede un tipo ahí botado
             tablaSimbolos.desecharUltimoTipoDato();
         }
@@ -755,7 +755,7 @@ public class Syntax extends java_cup.runtime.lr_parser {
                 for(int i=0; i<tablaSimbolos.variables.size(); i++){
                     Variable var = tablaSimbolos.variables.get(i);
                     var.setAmbito(identificador);
-                    if(!existeParametro(funcion, var.getIdentificador()) &&
+                    if(!existeParametro(funcion, var.getNombre()) &&
                         !tablaSimbolos.existeSimbolo(var)){
                         tablaSimbolos.insertar(var);
                     }else{
@@ -1128,6 +1128,33 @@ class CUP$Syntax$actions {
 		Object oypc = (Object)((java_cup.runtime.Symbol) CUP$Syntax$stack.elementAt(CUP$Syntax$top-1)).value;
 		
                     tablaSimbolos.agregarVariable(id.toString(), idleft, idright);
+
+                    // Inicializar la variable con un valor por defecto según su tipo
+                    Object valorPorDefecto = null;
+                    String tipoStr = tipo.value.toString().toLowerCase();
+                    switch(tipoStr) {
+                        case "int":
+                        case "shortint":
+                        case "longint":
+                            valorPorDefecto = 0;
+                            break;
+                        case "real":
+                            valorPorDefecto = 0.0;
+                            break;
+                        case "boolean":
+                            valorPorDefecto = false;
+                            break;
+                        case "char":
+                            valorPorDefecto = '\0';
+                            break;
+                        case "string":
+                            valorPorDefecto = "";
+                            break;
+                    }
+                    
+                    if(valorPorDefecto != null) {
+                        tablaSimbolos.inicializarVariable(id.toString(), valorPorDefecto, "Global");
+                    }
 
                     if (datosGlobales)
                     {
@@ -1584,6 +1611,11 @@ class CUP$Syntax$actions {
                             agregarCodigoEnsamblador(Generador.ExpresionesAritmeticas(pilaSemantica));
                         }
 
+                        // Actualizar valor de la variable en la tabla de símbolos
+                        // Por ahora usamos un valor simbólico para representar la expresión
+                        String operacion = "Asignación " + op_1.toString() + " " + (exp != null ? exp.value.toString() : "expresión");
+                        tablaSimbolos.actualizarValorVariable(id.toString(), exp != null ? exp.value : "expresión", operacion, "Global");
+
                         pilaSemantica.clear();
 
                         tablaSimbolos.agregarVariableUsada(id.toString(), idleft, idright);
@@ -1599,7 +1631,28 @@ class CUP$Syntax$actions {
 		int idleft = ((java_cup.runtime.Symbol)CUP$Syntax$stack.elementAt(CUP$Syntax$top-2)).left;
 		int idright = ((java_cup.runtime.Symbol)CUP$Syntax$stack.elementAt(CUP$Syntax$top-2)).right;
 		Object id = (Object)((java_cup.runtime.Symbol) CUP$Syntax$stack.elementAt(CUP$Syntax$top-2)).value;
+		int opleft = ((java_cup.runtime.Symbol)CUP$Syntax$stack.elementAt(CUP$Syntax$top-1)).left;
+		int opright = ((java_cup.runtime.Symbol)CUP$Syntax$stack.elementAt(CUP$Syntax$top-1)).right;
+		Symbol op = (Symbol)((java_cup.runtime.Symbol) CUP$Syntax$stack.elementAt(CUP$Syntax$top-1)).value;
+		int expleft = ((java_cup.runtime.Symbol)CUP$Syntax$stack.peek()).left;
+		int expright = ((java_cup.runtime.Symbol)CUP$Syntax$stack.peek()).right;
+		Symbol exp = (Symbol)((java_cup.runtime.Symbol) CUP$Syntax$stack.peek()).value;
 		
+                        // Aplicar operación aritmética compuesta
+                        if(op != null && exp != null) {
+                            String operador = op.value.toString();
+                            Object valorExpresion = exp.value;
+                            
+                            // Convertir el operador compuesto al operador simple correspondiente
+                            String operadorSimple = "+="; // Por defecto
+                            if(operador.equals("+=")) operadorSimple = "+=";
+                            else if(operador.equals("-=")) operadorSimple = "-=";
+                            else if(operador.equals("*=")) operadorSimple = "*=";
+                            else if(operador.equals("/=")) operadorSimple = "/=";
+                            
+                            tablaSimbolos.aplicarOperacionAritmetica(id.toString(), operadorSimple, valorExpresion, "Global");
+                        }
+                        
                         tablaSimbolos.agregarVariableUsada(id.toString(), idleft, idright);
                     
               CUP$Syntax$result = parser.getSymbolFactory().newSymbol("asignar_valores_2",20, ((java_cup.runtime.Symbol)CUP$Syntax$stack.elementAt(CUP$Syntax$top-2)), ((java_cup.runtime.Symbol)CUP$Syntax$stack.peek()), RESULT);
@@ -1621,6 +1674,14 @@ class CUP$Syntax$actions {
                         pilaSemantica.push_init(id.toString());
 
                         agregarCodigoEnsamblador(Generador.ExpresionesAritmeticas_(pilaSemantica));
+
+                        // Actualizar valor de la variable con incremento/decremento
+                        String operador = __oa.value.toString();
+                        if(operador.equals("++")) {
+                            tablaSimbolos.incrementarVariable(id.toString(), 1, true, "Global");
+                        } else if(operador.equals("--")) {
+                            tablaSimbolos.decrementarVariable(id.toString(), 1, true, "Global");
+                        }
 
                         pilaSemantica.clear();
 
@@ -1645,6 +1706,15 @@ class CUP$Syntax$actions {
                         pilaSemantica.push_init(id.toString());
 
                         agregarCodigoEnsamblador(Generador.ExpresionesAritmeticas_(pilaSemantica));
+
+                        // Actualizar valor de la variable con pre-incremento/decremento
+                        String operador = __oa.value.toString();
+                        if(operador.equals("++")) {
+                            tablaSimbolos.incrementarVariable(id.toString(), 1, false, "Global");
+                        } else if(operador.equals("--")) {
+                            tablaSimbolos.decrementarVariable(id.toString(), 1, false, "Global");
+                        }
+
                         pilaSemantica.clear();
 
                         tablaSimbolos.agregarVariableUsada(id.toString(), idleft, idright);
@@ -1672,6 +1742,23 @@ class CUP$Syntax$actions {
                         pilaSemantica.push_init(id1.toString());
 
                         agregarCodigoEnsamblador(Generador.ExpresionesAritmeticas__(pilaSemantica));
+                        
+                        // Primero incrementar/decrementar la variable fuente
+                        String operador = _oa.value.toString();
+                        if(operador.equals("++")) {
+                            tablaSimbolos.incrementarVariable(id2.toString(), 1, true, "Global");
+                        } else if(operador.equals("--")) {
+                            tablaSimbolos.decrementarVariable(id2.toString(), 1, true, "Global");
+                        }
+                        
+                        // Luego asignar el valor (antes del incremento) a la variable destino
+                        Variable varFuente = tablaSimbolos.getVariableEnTabla(id2.toString(), "Global");
+                        if(varFuente != null) {
+                            Object valorAnterior = varFuente.getValor();
+                            String operacionDesc = "Asignación desde " + id2.toString() + operador + " (valor antes del incremento)";
+                            tablaSimbolos.actualizarValorVariable(id1.toString(), valorAnterior, operacionDesc, "Global");
+                        }
+                        
                         pilaSemantica.clear();
 
                         tablaSimbolos.agregarVariableUsada(id1.toString(), id1left, id1right);
@@ -1700,6 +1787,23 @@ class CUP$Syntax$actions {
                         pilaSemantica.push_init(id1.toString());
 
                         agregarCodigoEnsamblador(Generador.ExpresionesAritmeticas__(pilaSemantica));
+                        
+                        // Primero incrementar/decrementar la variable fuente
+                        String operador = _oa.value.toString();
+                        if(operador.equals("++")) {
+                            tablaSimbolos.incrementarVariable(id2.toString(), 1, false, "Global");
+                        } else if(operador.equals("--")) {
+                            tablaSimbolos.decrementarVariable(id2.toString(), 1, false, "Global");
+                        }
+                        
+                        // Luego asignar el valor (después del incremento) a la variable destino
+                        Variable varFuente = tablaSimbolos.getVariableEnTabla(id2.toString(), "Global");
+                        if(varFuente != null) {
+                            Object valorNuevo = varFuente.getValor();
+                            String operacionDesc = "Asignación desde " + operador + id2.toString() + " (valor después del incremento)";
+                            tablaSimbolos.actualizarValorVariable(id1.toString(), valorNuevo, operacionDesc, "Global");
+                        }
+                        
                         pilaSemantica.clear();
 
                         tablaSimbolos.agregarVariableUsada(id1.toString(), id1left, id1right);
@@ -2079,7 +2183,10 @@ class CUP$Syntax$actions {
           case 98: // expr_aritmeticas ::= tokens _expr_aritmeticas 
             {
               Symbol RESULT =null;
-
+		int tokleft = ((java_cup.runtime.Symbol)CUP$Syntax$stack.elementAt(CUP$Syntax$top-1)).left;
+		int tokright = ((java_cup.runtime.Symbol)CUP$Syntax$stack.elementAt(CUP$Syntax$top-1)).right;
+		Symbol tok = (Symbol)((java_cup.runtime.Symbol) CUP$Syntax$stack.elementAt(CUP$Syntax$top-1)).value;
+		 RESULT = new Symbol(-1, tok.value); 
               CUP$Syntax$result = parser.getSymbolFactory().newSymbol("expr_aritmeticas",25, ((java_cup.runtime.Symbol)CUP$Syntax$stack.elementAt(CUP$Syntax$top-1)), ((java_cup.runtime.Symbol)CUP$Syntax$stack.peek()), RESULT);
             }
           return CUP$Syntax$result;
@@ -2097,7 +2204,10 @@ class CUP$Syntax$actions {
           case 100: // expr_aritmeticas ::= OPERADOR_PARENTESIS_ABRIR expr_aritmeticas OPERADOR_PARENTESIS_CERRAR _expr_aritmeticas 
             {
               Symbol RESULT =null;
-
+		int expleft = ((java_cup.runtime.Symbol)CUP$Syntax$stack.elementAt(CUP$Syntax$top-2)).left;
+		int expright = ((java_cup.runtime.Symbol)CUP$Syntax$stack.elementAt(CUP$Syntax$top-2)).right;
+		Symbol exp = (Symbol)((java_cup.runtime.Symbol) CUP$Syntax$stack.elementAt(CUP$Syntax$top-2)).value;
+		 RESULT = new Symbol(-1, exp.value); 
               CUP$Syntax$result = parser.getSymbolFactory().newSymbol("expr_aritmeticas",25, ((java_cup.runtime.Symbol)CUP$Syntax$stack.elementAt(CUP$Syntax$top-3)), ((java_cup.runtime.Symbol)CUP$Syntax$stack.peek()), RESULT);
             }
           return CUP$Syntax$result;
@@ -2318,7 +2428,10 @@ class CUP$Syntax$actions {
           case 120: // ___operadores_aritmeticos ::= OPERADOR_ASIGNACION_ADICION 
             {
               Symbol RESULT =null;
-
+		int opleft = ((java_cup.runtime.Symbol)CUP$Syntax$stack.peek()).left;
+		int opright = ((java_cup.runtime.Symbol)CUP$Syntax$stack.peek()).right;
+		Object op = (Object)((java_cup.runtime.Symbol) CUP$Syntax$stack.peek()).value;
+		 RESULT = new Symbol(-1, op.toString()); 
               CUP$Syntax$result = parser.getSymbolFactory().newSymbol("___operadores_aritmeticos",30, ((java_cup.runtime.Symbol)CUP$Syntax$stack.peek()), ((java_cup.runtime.Symbol)CUP$Syntax$stack.peek()), RESULT);
             }
           return CUP$Syntax$result;
@@ -2327,7 +2440,10 @@ class CUP$Syntax$actions {
           case 121: // ___operadores_aritmeticos ::= OPERADOR_ASIGNACION_SUSTRACCION 
             {
               Symbol RESULT =null;
-
+		int opleft = ((java_cup.runtime.Symbol)CUP$Syntax$stack.peek()).left;
+		int opright = ((java_cup.runtime.Symbol)CUP$Syntax$stack.peek()).right;
+		Object op = (Object)((java_cup.runtime.Symbol) CUP$Syntax$stack.peek()).value;
+		 RESULT = new Symbol(-1, op.toString()); 
               CUP$Syntax$result = parser.getSymbolFactory().newSymbol("___operadores_aritmeticos",30, ((java_cup.runtime.Symbol)CUP$Syntax$stack.peek()), ((java_cup.runtime.Symbol)CUP$Syntax$stack.peek()), RESULT);
             }
           return CUP$Syntax$result;
@@ -2336,7 +2452,10 @@ class CUP$Syntax$actions {
           case 122: // ___operadores_aritmeticos ::= OPERADOR_ASIGNACION_MULTIPLICACION 
             {
               Symbol RESULT =null;
-
+		int opleft = ((java_cup.runtime.Symbol)CUP$Syntax$stack.peek()).left;
+		int opright = ((java_cup.runtime.Symbol)CUP$Syntax$stack.peek()).right;
+		Object op = (Object)((java_cup.runtime.Symbol) CUP$Syntax$stack.peek()).value;
+		 RESULT = new Symbol(-1, op.toString()); 
               CUP$Syntax$result = parser.getSymbolFactory().newSymbol("___operadores_aritmeticos",30, ((java_cup.runtime.Symbol)CUP$Syntax$stack.peek()), ((java_cup.runtime.Symbol)CUP$Syntax$stack.peek()), RESULT);
             }
           return CUP$Syntax$result;
@@ -2345,7 +2464,10 @@ class CUP$Syntax$actions {
           case 123: // ___operadores_aritmeticos ::= OPERADOR_ASIGNACION_DIVISION 
             {
               Symbol RESULT =null;
-
+		int opleft = ((java_cup.runtime.Symbol)CUP$Syntax$stack.peek()).left;
+		int opright = ((java_cup.runtime.Symbol)CUP$Syntax$stack.peek()).right;
+		Object op = (Object)((java_cup.runtime.Symbol) CUP$Syntax$stack.peek()).value;
+		 RESULT = new Symbol(-1, op.toString()); 
               CUP$Syntax$result = parser.getSymbolFactory().newSymbol("___operadores_aritmeticos",30, ((java_cup.runtime.Symbol)CUP$Syntax$stack.peek()), ((java_cup.runtime.Symbol)CUP$Syntax$stack.peek()), RESULT);
             }
           return CUP$Syntax$result;
@@ -2485,7 +2607,10 @@ class CUP$Syntax$actions {
 		Object lne = (Object)((java_cup.runtime.Symbol) CUP$Syntax$stack.peek()).value;
 		
                 pilaSemantica.push_end(lne.toString());
-                RESULT = new Symbol(-1, lne.toString());
+                
+                // Convertir el literal a entero para el seguimiento de valores
+                int valorEntero = Integer.parseInt(lne.toString());
+                RESULT = new Symbol(-1, valorEntero);
 
                 tablaSimbolos.agregarParametroLlamada(TipoDato.INT);
           
@@ -2502,7 +2627,10 @@ class CUP$Syntax$actions {
 		Object lnf = (Object)((java_cup.runtime.Symbol) CUP$Syntax$stack.peek()).value;
 		
                 pilaSemantica.push_end(lnf.toString());
-                RESULT = new Symbol(-1, lnf.toString());
+                
+                // Convertir el literal a flotante para el seguimiento de valores
+                double valorFlotante = Double.parseDouble(lnf.toString());
+                RESULT = new Symbol(-1, valorFlotante);
 
                 tablaSimbolos.agregarParametroLlamada(TipoDato.REAL);
           
@@ -2519,7 +2647,13 @@ class CUP$Syntax$actions {
 		Object ls = (Object)((java_cup.runtime.Symbol) CUP$Syntax$stack.peek()).value;
 		
                 pilaSemantica.push_end(ls.toString());
-                RESULT = new Symbol(-1, ls.toString());
+                
+                // Quitar comillas del string literal
+                String valorString = ls.toString();
+                if(valorString.startsWith("\"") && valorString.endsWith("\"")) {
+                    valorString = valorString.substring(1, valorString.length() - 1);
+                }
+                RESULT = new Symbol(-1, valorString);
 
                 tablaSimbolos.agregarParametroLlamada(TipoDato.STRING);
           

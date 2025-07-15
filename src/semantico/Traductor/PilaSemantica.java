@@ -65,6 +65,14 @@ public class PilaSemantica {
         return pilaSemantica.size();
     }
 
+    public String get(int index)
+    {
+        if(index >= 0 && index < pilaSemantica.size()) {
+            return pilaSemantica.get(index).getValor();
+        }
+        return "";
+    }
+
     public void print()
     {
         for(int i = 0; i < pilaSemantica.size(); i++)
