@@ -16,19 +16,26 @@ pre { background-color: #f8f8f8; padding: 10px; border: 1px solid #ddd; overflow
 </head>
 <body>
 <h1>Reporte de Análisis Léxico y Sintáctico</h1>
-<p><strong>Fecha y hora de generación:</strong> 17/07/2025 21:10:03</p>
+<p><strong>Fecha y hora de generación:</strong> 18/07/2025 00:56:31</p>
+<p><strong>Archivo analizado:</strong> main.nola</p>
 <h2>Código Fuente</h2>
 <pre class='codigo'>program main
 
 var
   a:int;
   b:int;
+  c:int;
 
 begin
-  a := 10;
-  b := 20;
+    c := 0;
+    a := 10;
+    b := 20;
+
+    c += a;
+    c += b;
 
 ck
+
 </pre>
 <h2>Tokens Encontrados</h2>
 <table>
@@ -36,16 +43,19 @@ ck
 <tr><td>program</td><td>program</td><td>1, </td></tr>
 <tr><td>main</td><td>identificador</td><td>1, </td></tr>
 <tr><td>var</td><td>var</td><td>3, </td></tr>
-<tr><td>a</td><td>identificador</td><td>4, 8, </td></tr>
-<tr><td>:</td><td>operador_dos_puntos</td><td>4, 5, </td></tr>
-<tr><td>int</td><td>int</td><td>4, 5, </td></tr>
-<tr><td>;</td><td>operador_punto_y_coma</td><td>4, 5, 8, 9, </td></tr>
-<tr><td>b</td><td>identificador</td><td>5, 9, </td></tr>
-<tr><td>begin</td><td>begin</td><td>7, </td></tr>
-<tr><td>:=</td><td>operador_asignacion_1</td><td>8, 9, </td></tr>
-<tr><td>10</td><td>literal_num_entero</td><td>8, </td></tr>
-<tr><td>20</td><td>literal_num_entero</td><td>9, </td></tr>
-<tr><td>ck</td><td>end</td><td>11, </td></tr>
+<tr><td>a</td><td>identificador</td><td>4, 10, 13, </td></tr>
+<tr><td>:</td><td>operador_dos_puntos</td><td>4, 5, 6, </td></tr>
+<tr><td>int</td><td>int</td><td>4, 5, 6, </td></tr>
+<tr><td>;</td><td>operador_punto_y_coma</td><td>4, 5, 6, 9, 10, 11, 13, 14, </td></tr>
+<tr><td>b</td><td>identificador</td><td>5, 11, 14, </td></tr>
+<tr><td>c</td><td>identificador</td><td>6, 9, 13, 14, </td></tr>
+<tr><td>begin</td><td>begin</td><td>8, </td></tr>
+<tr><td>:=</td><td>operador_asignacion_1</td><td>9, 10, 11, </td></tr>
+<tr><td>0</td><td>literal_num_entero</td><td>9, </td></tr>
+<tr><td>10</td><td>literal_num_entero</td><td>10, </td></tr>
+<tr><td>20</td><td>literal_num_entero</td><td>11, </td></tr>
+<tr><td>+=</td><td>operador_asignacion_adicion</td><td>13, 14, </td></tr>
+<tr><td>ck</td><td>end</td><td>16, </td></tr>
 </table>
 <h2>Errores Léxicos</h2>
 <p>No se encontraron errores léxicos.</p>
@@ -58,6 +68,7 @@ ck
 <tr><th>Nombre</th><th>Tipo</th><th>Valor</th><th>Alcance</th><th>Secuencia de Operaciones</th></tr>
 <tr><td>a</td><td>int</td><td>10</td><td>Global</td><td>Asignación := 10: null -&gt; 10</td></tr>
 <tr><td>b</td><td>int</td><td>20</td><td>Global</td><td>Asignación := 20: null -&gt; 20</td></tr>
+<tr><td>c</td><td>int</td><td>30.0</td><td>Global</td><td>Asignación := 0: null -&gt; 0, Operación += 10: 0.0 -&gt; 10.0: 0 -&gt; 10.0, Operación += 20: 10.0 -&gt; 30.0: 10.0 -&gt; 30.0</td></tr>
 </table>
 </body>
 </html>

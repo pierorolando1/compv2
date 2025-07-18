@@ -1,15 +1,29 @@
 program main
 
 var
-  a:int;
-  b:int;
+    a:int;
+    b:int;
+    i:int;
+
 
 begin
-  a := 10;
-  b := 20;
 
-    if(a>b) then
-        a:=30;
+    a := 1;
+    b := 2;
+    
+    if (a < b) then
+        b := 3;
     ck
+
+      b := 20;
+
+
+
+    FOR i := 1 TO 10 DO
+        BEGIN
+           WHILE (a>8) DO BEGIN
+               i:=0;
+            ck
+        ck
 
 ck

@@ -447,14 +447,17 @@ public class Main extends Application implements Cloneable  {
     }
 
     /**
-     * Encargado de abrir el FileChooser para seleccionar el archivo txt
+     * Encargado de abrir el FileChooser para seleccionar archivos .nola
      */
     public void btn_action_abrirArchivo() {
         FileChooser fileChooser = new FileChooser();
 
-        //Set extension filter
-        FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("TXT files (*.txt)", "*.txt");
-        fileChooser.getExtensionFilters().add(extFilter);
+        //Set extension filters
+        FileChooser.ExtensionFilter nolaFilter = new FileChooser.ExtensionFilter("NOLA files (*.nola)", "*.nola");
+        FileChooser.ExtensionFilter allFilesFilter = new FileChooser.ExtensionFilter("Todos los archivos (*.*)", "*.*");
+        
+        fileChooser.getExtensionFilters().addAll(nolaFilter, allFilesFilter);
+        fileChooser.setSelectedExtensionFilter(nolaFilter); // Set NOLA files as default
 
         //Show save file dialog
         File file = fileChooser.showOpenDialog(miPrimaryStage);
@@ -696,16 +699,19 @@ public void mostrarTablaSimbolos(String texto) {
         fileChooser.setTitle("Guardar archivo como");
         
         // Establecer filtros de extensión
-        FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("TXT files (*.txt)", "*.txt");
-        fileChooser.getExtensionFilters().add(extFilter);
+        FileChooser.ExtensionFilter nolaFilter = new FileChooser.ExtensionFilter("NOLA files (*.nola)", "*.nola");
+        FileChooser.ExtensionFilter allFilesFilter = new FileChooser.ExtensionFilter("Todos los archivos (*.*)", "*.*");
+        
+        fileChooser.getExtensionFilters().addAll(nolaFilter, allFilesFilter);
+        fileChooser.setSelectedExtensionFilter(nolaFilter); // Set NOLA files as default for saving
         
         // Mostrar diálogo de guardar
         File file = fileChooser.showSaveDialog(miPrimaryStage);
         
         if (file != null) {
-            // Asegurar que el archivo tenga la extensión .txt
-            if (!file.getName().toLowerCase().endsWith(".txt")) {
-                file = new File(file.getAbsolutePath() + ".txt");
+            // Only add .nola extension if no extension is provided and NOLA filter is selected
+            if (!file.getName().contains(".") && fileChooser.getSelectedExtensionFilter() == nolaFilter) {
+                file = new File(file.getAbsolutePath() + ".nola");
             }
             guardarArchivo(file);
             currentFile = file;

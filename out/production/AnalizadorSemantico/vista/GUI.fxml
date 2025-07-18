@@ -25,7 +25,6 @@
                         <MenuItem fx:id="menu_abrir" text="Abrir" onAction="#menu_action_abrir" />
                         <MenuItem fx:id="menu_guardar" text="Guardar" onAction="#menu_action_guardar" />
                         <MenuItem fx:id="menu_guardar_como" text="Guardar Como" onAction="#menu_action_guardar_como" />
-
                         <MenuItem fx:id="menu_exportar_pdf" text="Exportar Todo (PDF)" onAction="#menu_action_exportar_pdf" />
                     </items>
                 </Menu>
