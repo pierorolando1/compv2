@@ -1,15 +1,15 @@
 program main
 
 var
-
-a:int;
-
+  a:int;
+  b:int;
 
 begin
+  a := 10;
+  b := 20;
 
-a:=1;
-a := 2;
+    if(a>b) then
+        a:=30;
+    ck
 
 ck
-
-

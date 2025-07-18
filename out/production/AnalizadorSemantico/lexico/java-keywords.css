@@ -115,3 +115,29 @@
     -fx-text-fill: #a9b1d6;
 
 }
+
+/* Menu styling */
+.menu-bar {
+    -fx-background-color: #414868;
+}
+
+.menu {
+    -fx-text-fill: #c0caf5;
+}
+
+.menu:hover {
+    -fx-background-color: #565f89;
+}
+
+.menu-item {
+    -fx-background-color: #414868;
+    -fx-text-fill: #c0caf5;
+}
+
+.menu-item:hover {
+    -fx-background-color: #565f89;
+}
+
+.context-menu {
+    -fx-background-color: #414868;
+}

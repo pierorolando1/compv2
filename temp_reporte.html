@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='UTF-8'>
+<title>Reporte de Análisis Léxico y Sintáctico</title>
+<style>
+body { font-family: Arial, sans-serif; margin: 20px; }
+h1 { color: #333; border-bottom: 2px solid #333; }
+h2 { color: #666; margin-top: 30px; }
+table { border-collapse: collapse; width: 100%; margin: 10px 0; }
+th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+th { background-color: #f4f4f4; }
+pre { background-color: #f8f8f8; padding: 10px; border: 1px solid #ddd; overflow-x: auto; }
+.codigo { font-family: 'Courier New', monospace; font-size: 12px; }
+</style>
+</head>
+<body>
+<h1>Reporte de Análisis Léxico y Sintáctico</h1>
+<p><strong>Fecha y hora de generación:</strong> 17/07/2025 21:10:03</p>
+<h2>Código Fuente</h2>
+<pre class='codigo'>program main
+
+var
+  a:int;
+  b:int;
+
+begin
+  a := 10;
+  b := 20;
+
+ck
+</pre>
+<h2>Tokens Encontrados</h2>
+<table>
+<tr><th>Token</th><th>Tipo de Token</th><th>Línea</th></tr>
+<tr><td>program</td><td>program</td><td>1, </td></tr>
+<tr><td>main</td><td>identificador</td><td>1, </td></tr>
+<tr><td>var</td><td>var</td><td>3, </td></tr>
+<tr><td>a</td><td>identificador</td><td>4, 8, </td></tr>
+<tr><td>:</td><td>operador_dos_puntos</td><td>4, 5, </td></tr>
+<tr><td>int</td><td>int</td><td>4, 5, </td></tr>
+<tr><td>;</td><td>operador_punto_y_coma</td><td>4, 5, 8, 9, </td></tr>
+<tr><td>b</td><td>identificador</td><td>5, 9, </td></tr>
+<tr><td>begin</td><td>begin</td><td>7, </td></tr>
+<tr><td>:=</td><td>operador_asignacion_1</td><td>8, 9, </td></tr>
+<tr><td>10</td><td>literal_num_entero</td><td>8, </td></tr>
+<tr><td>20</td><td>literal_num_entero</td><td>9, </td></tr>
+<tr><td>ck</td><td>end</td><td>11, </td></tr>
+</table>
+<h2>Errores Léxicos</h2>
+<p>No se encontraron errores léxicos.</p>
+<h2>Errores Sintácticos</h2>
+<p>No se encontraron errores sintácticos.</p>
+<h2>Errores Semánticos</h2>
+<p>No se encontraron errores semánticos.</p>
+<h2>Tabla de Símbolos</h2>
+<table>
+<tr><th>Nombre</th><th>Tipo</th><th>Valor</th><th>Alcance</th><th>Secuencia de Operaciones</th></tr>
+<tr><td>a</td><td>int</td><td>10</td><td>Global</td><td>Asignación := 10: null -&gt; 10</td></tr>
+<tr><td>b</td><td>int</td><td>20</td><td>Global</td><td>Asignación := 20: null -&gt; 20</td></tr>
+</table>
+</body>
+</html>

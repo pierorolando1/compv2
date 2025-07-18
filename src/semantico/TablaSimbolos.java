@@ -602,6 +602,43 @@ public class TablaSimbolos {
         } else if (valor instanceof Double || valor instanceof Float) {
             return TipoDato.REAL;
         } else if (valor instanceof String) {
+            // Verificar si el string representa un identificador de variable
+            String valorStr = (String) valor;
+            Variable variable = getVariableEnTabla(valorStr, "Global");
+            if (variable != null) {
+                // Es un identificador de variable, retornar el tipo de la variable
+                return variable.getTipoDato();
+            }
+            // Si no es un identificador de variable, es un literal string
+            return TipoDato.STRING;
+        } else if (valor instanceof Boolean) {
+            return TipoDato.BOOLEAN;
+        } else if (valor instanceof Character) {
+            return TipoDato.CHAR;
+        }
+        return null; // Tipo desconocido
+    }
+
+    /**
+     * Obtiene el tipo de dato de un valor considerando un ámbito específico
+     * @param valor El valor a analizar
+     * @param ambito El ámbito donde buscar la variable
+     * @return TipoDato correspondiente al valor
+     */
+    public TipoDato obtenerTipoValor(Object valor, String ambito) {
+        if (valor instanceof Integer || valor instanceof Long) {
+            return TipoDato.INT;
+        } else if (valor instanceof Double || valor instanceof Float) {
+            return TipoDato.REAL;
+        } else if (valor instanceof String) {
+            // Verificar si el string representa un identificador de variable
+            String valorStr = (String) valor;
+            Variable variable = getVariableEnTabla(valorStr, ambito);
+            if (variable != null) {
+                // Es un identificador de variable, retornar el tipo de la variable
+                return variable.getTipoDato();
+            }
+            // Si no es un identificador de variable, es un literal string
             return TipoDato.STRING;
         } else if (valor instanceof Boolean) {
             return TipoDato.BOOLEAN;
@@ -726,6 +763,112 @@ public class TablaSimbolos {
         }
 
         return msj;
+    }
+
+    /**
+     * Evalúa una expresión aritmética entre dos operandos
+     */
+    public Object evaluarExpresionAritmetica(Object operando1, String operador, Object operando2, String ambito) {
+        try {
+            // Convertir operandos a números si es posible
+            double val1 = convertirANumero(operando1, ambito);
+            double val2 = convertirANumero(operando2, ambito);
+            
+            double resultado;
+            switch (operador) {
+                case "+":
+                    resultado = val1 + val2;
+                    break;
+                case "-":
+                    resultado = val1 - val2;
+                    break;
+                case "*":
+                    resultado = val1 * val2;
+                    break;
+                case "/":
+                case "DIV":
+                    if (val2 == 0) {
+                        System.err.println("Error: División por cero");
+                        return null;
+                    }
+                    resultado = val1 / val2;
+                    break;
+                case "MOD":
+                    if (val2 == 0) {
+                        System.err.println("Error: División por cero en MOD");
+                        return null;
+                    }
+                    resultado = val1 % val2;
+                    break;
+                default:
+                    System.err.println("Operador aritmético no soportado: " + operador);
+                    return null;
+            }
+            
+            // Si ambos operandos son enteros y el resultado es entero, devolver entero
+            if (esEntero(operando1, ambito) && esEntero(operando2, ambito) && resultado == Math.floor(resultado)) {
+                return (int) resultado;
+            }
+            
+            return resultado;
+        } catch (Exception e) {
+            System.err.println("Error evaluando expresión aritmética: " + e.getMessage());
+            return null;
+        }
+    }
+    
+    /**
+     * Convierte un valor a número, resolviendo variables si es necesario
+     */
+    private double convertirANumero(Object valor, String ambito) {
+        if (valor instanceof Number) {
+            return ((Number) valor).doubleValue();
+        }
+        
+        if (valor instanceof String) {
+            String str = valor.toString();
+            
+            // Intentar convertir directamente si es un número
+            try {
+                return Double.parseDouble(str);
+            } catch (NumberFormatException e) {
+                // Si no es un número, buscar como variable
+                Variable var = getVariableEnTabla(str, ambito);
+                if (var != null && var.getValor() instanceof Number) {
+                    return ((Number) var.getValor()).doubleValue();
+                }
+            }
+        }
+        
+        throw new IllegalArgumentException("No se puede convertir a número: " + valor);
+    }
+    
+    /**
+     * Verifica si un valor es un entero
+     */
+    private boolean esEntero(Object valor, String ambito) {
+        if (valor instanceof Integer) {
+            return true;
+        }
+        
+        if (valor instanceof String) {
+            String str = valor.toString();
+            
+            // Intentar convertir directamente
+            try {
+                Integer.parseInt(str);
+                return true;
+            } catch (NumberFormatException e) {
+                // Si no es un número, buscar como variable
+                Variable var = getVariableEnTabla(str, ambito);
+                if (var != null) {
+                    TipoDato tipo = var.getTipoDato();
+                    return tipo == TipoDato.INT || tipo == TipoDato.SHORTINT || tipo == TipoDato.LONGINT;
+                }
+            }
+        }
+        
+        return false;
     }
 
 }

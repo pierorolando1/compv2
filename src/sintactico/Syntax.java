@@ -1630,9 +1630,12 @@ class CUP$Syntax$actions {
                                 String tipoValStr = tipoValor != null ? tipoValor.toString().toLowerCase() : "desconocido";
                                 ErrorSemanticoTipo(id.toString(), tipoVarStr, tipoValStr, idleft, idright);
                             } else {
-                                // Actualizar valor de la variable en la tabla de símbolos solo si los tipos son compatibles
+                                // El valor a asignar ya debería ser el valor real, no el nombre del identificador
+                                Object valorAAsignar = exp.value;
+                                
+                                // Actualizar valor de la variable en la tabla de símbolos
                                 String operacion = "Asignación " + op_1.toString() + " " + (exp != null ? exp.value.toString() : "expresión");
-                                tablaSimbolos.actualizarValorVariable(id.toString(), exp != null ? exp.value : "expresión", operacion, "Global");
+                                tablaSimbolos.actualizarValorVariable(id.toString(), valorAAsignar, operacion, "Global");
                             }
                         }
 
@@ -2295,7 +2298,20 @@ class CUP$Syntax$actions {
 		int tokleft = ((java_cup.runtime.Symbol)CUP$Syntax$stack.elementAt(CUP$Syntax$top-1)).left;
 		int tokright = ((java_cup.runtime.Symbol)CUP$Syntax$stack.elementAt(CUP$Syntax$top-1)).right;
 		Symbol tok = (Symbol)((java_cup.runtime.Symbol) CUP$Syntax$stack.elementAt(CUP$Syntax$top-1)).value;
-		 RESULT = new Symbol(-1, tok.value); 
+		int _exprleft = ((java_cup.runtime.Symbol)CUP$Syntax$stack.peek()).left;
+		int _exprright = ((java_cup.runtime.Symbol)CUP$Syntax$stack.peek()).right;
+		Symbol _expr = (Symbol)((java_cup.runtime.Symbol) CUP$Syntax$stack.peek()).value;
+		 
+                        // Si hay una expresión aritmética adicional, evaluar la operación
+                        if (_expr != null && _expr.value != null) {
+                            // En este caso, tok es el primer operando y _expr contiene el operador y segundo operando
+                            // La evaluación se maneja en _expr_aritmeticas
+                            RESULT = new Symbol(-1, _expr.value);
+                        } else {
+                            // Si es solo un token, devolver su valor
+                            RESULT = new Symbol(-1, tok.value);
+                        }
+                    
               CUP$Syntax$result = parser.getSymbolFactory().newSymbol("expr_aritmeticas",25, ((java_cup.runtime.Symbol)CUP$Syntax$stack.elementAt(CUP$Syntax$top-1)), ((java_cup.runtime.Symbol)CUP$Syntax$stack.peek()), RESULT);
             }
           return CUP$Syntax$result;
@@ -2325,7 +2341,47 @@ class CUP$Syntax$actions {
           case 101: // _expr_aritmeticas ::= _operadores_aritmeticos expr_aritmeticas 
             {
               Symbol RESULT =null;
-
+		int opleft = ((java_cup.runtime.Symbol)CUP$Syntax$stack.elementAt(CUP$Syntax$top-1)).left;
+		int opright = ((java_cup.runtime.Symbol)CUP$Syntax$stack.elementAt(CUP$Syntax$top-1)).right;
+		Symbol op = (Symbol)((java_cup.runtime.Symbol) CUP$Syntax$stack.elementAt(CUP$Syntax$top-1)).value;
+		int expr2left = ((java_cup.runtime.Symbol)CUP$Syntax$stack.peek()).left;
+		int expr2right = ((java_cup.runtime.Symbol)CUP$Syntax$stack.peek()).right;
+		Symbol expr2 = (Symbol)((java_cup.runtime.Symbol) CUP$Syntax$stack.peek()).value;
+		 
+                        // Para expresiones aritméticas binarias, necesitamos evaluar el resultado
+                        // Obtener los operandos del stack semántico si están disponibles
+                        if (pilaSemantica.size() >= 2) {
+                            try {
+                                // Los últimos dos elementos en la pila son los operandos
+                                String segundoOperandoStr = pilaSemantica.get(pilaSemantica.size() - 1);
+                                String primerOperandoStr = pilaSemantica.get(pilaSemantica.size() - 2);
+                                String operador = op.value != null ? op.value.toString() : "+";
+                                
+                                // Obtener los valores reales si son variables
+                                Object primerOperando = primerOperandoStr;
+                                Object segundoOperando = segundoOperandoStr;
+                                
+                                Variable var1 = tablaSimbolos.getVariableEnTabla(primerOperandoStr, "Global");
+                                if (var1 != null) {
+                                    primerOperando = var1.getValor();
+                                }
+                                
+                                Variable var2 = tablaSimbolos.getVariableEnTabla(segundoOperandoStr, "Global");
+                                if (var2 != null) {
+                                    segundoOperando = var2.getValor();
+                                }
+                                
+                                // Evaluar la expresión aritmética
+                                Object resultado = tablaSimbolos.evaluarExpresionAritmetica(primerOperando, operador, segundoOperando, "Global");
+                                RESULT = new Symbol(-1, resultado);
+                            } catch (Exception e) {
+                                // En caso de error, usar el valor del segundo operando
+                                RESULT = new Symbol(-1, expr2.value);
+                            }
+                        } else {
+                            RESULT = new Symbol(-1, expr2.value);
+                        }
+                    
               CUP$Syntax$result = parser.getSymbolFactory().newSymbol("_expr_aritmeticas",26, ((java_cup.runtime.Symbol)CUP$Syntax$stack.elementAt(CUP$Syntax$top-1)), ((java_cup.runtime.Symbol)CUP$Syntax$stack.peek()), RESULT);
             }
           return CUP$Syntax$result;
@@ -2444,7 +2500,7 @@ class CUP$Syntax$actions {
 		int oaleft = ((java_cup.runtime.Symbol)CUP$Syntax$stack.peek()).left;
 		int oaright = ((java_cup.runtime.Symbol)CUP$Syntax$stack.peek()).right;
 		Object oa = (Object)((java_cup.runtime.Symbol) CUP$Syntax$stack.peek()).value;
-		 pilaSemantica.push_end(oa.toString()); 
+		 pilaSemantica.push_end(oa.toString()); RESULT = new Symbol(-1, oa.toString()); 
               CUP$Syntax$result = parser.getSymbolFactory().newSymbol("_operadores_aritmeticos",28, ((java_cup.runtime.Symbol)CUP$Syntax$stack.peek()), ((java_cup.runtime.Symbol)CUP$Syntax$stack.peek()), RESULT);
             }
           return CUP$Syntax$result;
@@ -2456,7 +2512,7 @@ class CUP$Syntax$actions {
 		int osleft = ((java_cup.runtime.Symbol)CUP$Syntax$stack.peek()).left;
 		int osright = ((java_cup.runtime.Symbol)CUP$Syntax$stack.peek()).right;
 		Object os = (Object)((java_cup.runtime.Symbol) CUP$Syntax$stack.peek()).value;
-		 pilaSemantica.push_end(os.toString()); 
+		 pilaSemantica.push_end(os.toString()); RESULT = new Symbol(-1, os.toString()); 
               CUP$Syntax$result = parser.getSymbolFactory().newSymbol("_operadores_aritmeticos",28, ((java_cup.runtime.Symbol)CUP$Syntax$stack.peek()), ((java_cup.runtime.Symbol)CUP$Syntax$stack.peek()), RESULT);
             }
           return CUP$Syntax$result;
@@ -2468,7 +2524,7 @@ class CUP$Syntax$actions {
 		int omleft = ((java_cup.runtime.Symbol)CUP$Syntax$stack.peek()).left;
 		int omright = ((java_cup.runtime.Symbol)CUP$Syntax$stack.peek()).right;
 		Object om = (Object)((java_cup.runtime.Symbol) CUP$Syntax$stack.peek()).value;
-		 pilaSemantica.push_end(om.toString()); 
+		 pilaSemantica.push_end(om.toString()); RESULT = new Symbol(-1, om.toString()); 
               CUP$Syntax$result = parser.getSymbolFactory().newSymbol("_operadores_aritmeticos",28, ((java_cup.runtime.Symbol)CUP$Syntax$stack.peek()), ((java_cup.runtime.Symbol)CUP$Syntax$stack.peek()), RESULT);
             }
           return CUP$Syntax$result;
@@ -2480,7 +2536,7 @@ class CUP$Syntax$actions {
 		int odleft = ((java_cup.runtime.Symbol)CUP$Syntax$stack.peek()).left;
 		int odright = ((java_cup.runtime.Symbol)CUP$Syntax$stack.peek()).right;
 		Object od = (Object)((java_cup.runtime.Symbol) CUP$Syntax$stack.peek()).value;
-		 pilaSemantica.push_end(od.toString()); 
+		 pilaSemantica.push_end(od.toString()); RESULT = new Symbol(-1, od.toString()); 
               CUP$Syntax$result = parser.getSymbolFactory().newSymbol("_operadores_aritmeticos",28, ((java_cup.runtime.Symbol)CUP$Syntax$stack.peek()), ((java_cup.runtime.Symbol)CUP$Syntax$stack.peek()), RESULT);
             }
           return CUP$Syntax$result;
@@ -2492,7 +2548,7 @@ class CUP$Syntax$actions {
 		int modleft = ((java_cup.runtime.Symbol)CUP$Syntax$stack.peek()).left;
 		int modright = ((java_cup.runtime.Symbol)CUP$Syntax$stack.peek()).right;
 		Object mod = (Object)((java_cup.runtime.Symbol) CUP$Syntax$stack.peek()).value;
-		 pilaSemantica.push_end(mod.toString()); 
+		 pilaSemantica.push_end(mod.toString()); RESULT = new Symbol(-1, mod.toString()); 
               CUP$Syntax$result = parser.getSymbolFactory().newSymbol("_operadores_aritmeticos",28, ((java_cup.runtime.Symbol)CUP$Syntax$stack.peek()), ((java_cup.runtime.Symbol)CUP$Syntax$stack.peek()), RESULT);
             }
           return CUP$Syntax$result;
@@ -2504,7 +2560,7 @@ class CUP$Syntax$actions {
 		int divleft = ((java_cup.runtime.Symbol)CUP$Syntax$stack.peek()).left;
 		int divright = ((java_cup.runtime.Symbol)CUP$Syntax$stack.peek()).right;
 		Object div = (Object)((java_cup.runtime.Symbol) CUP$Syntax$stack.peek()).value;
-		 pilaSemantica.push_end(div.toString()); 
+		 pilaSemantica.push_end(div.toString()); RESULT = new Symbol(-1, div.toString()); 
               CUP$Syntax$result = parser.getSymbolFactory().newSymbol("_operadores_aritmeticos",28, ((java_cup.runtime.Symbol)CUP$Syntax$stack.peek()), ((java_cup.runtime.Symbol)CUP$Syntax$stack.peek()), RESULT);
             }
           return CUP$Syntax$result;
@@ -2698,7 +2754,14 @@ class CUP$Syntax$actions {
 		Object id = (Object)((java_cup.runtime.Symbol) CUP$Syntax$stack.peek()).value;
 		
                 pilaSemantica.push_end(id.toString());
-                RESULT = new Symbol(-1, id.toString());
+                
+                // Obtener el valor real de la variable para el seguimiento de valores
+                Variable varEncontrada = tablaSimbolos.getVariableEnTabla(id.toString(), "Global");
+                Object valorReal = id.toString(); // Por defecto, el nombre del identificador
+                if (varEncontrada != null) {
+                    valorReal = varEncontrada.getValor();
+                }
+                RESULT = new Symbol(-1, valorReal);
 
                 tablaSimbolos.agregarParametroLlamada(id.toString());
                 tablaSimbolos.agregarVariableUsada(id.toString(), idleft, idright);

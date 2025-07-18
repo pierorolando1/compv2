@@ -15,6 +15,7 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import javafx.scene.control.Alert;
 import lib.JavaKeywordsAsyncDemo;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.LineNumberFactory;
@@ -42,6 +43,11 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
+import java.awt.Desktop;
+import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 import java_cup.runtime.*;
 
@@ -63,6 +69,7 @@ public class Main extends Application implements Cloneable  {
     private final ObservableList<ItemTablaSimbolos> info_tabla_simbolos = FXCollections.observableArrayList();
 
     @FXML public Button btn_abrir_archivo_id, btn_procesar_id;
+    @FXML public MenuItem menu_abrir, menu_guardar, menu_guardar_como, menu_exportar_pdf;
 
     @FXML private TextArea ta_errores_sintacticos_id;
     @FXML private TextArea ta_errores_semanticos_id;
@@ -75,6 +82,7 @@ public class Main extends Application implements Cloneable  {
     private List<LineaToken> tokenslist, tokenslistErrores;
 
     private Stage miPrimaryStage;
+    private File currentFile; // Para guardar el archivo actual
 
     private static final String[] KEYWORDS = new ArrayList<String>(){
         {
@@ -239,7 +247,6 @@ public class Main extends Application implements Cloneable  {
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-
 
 
     @FXML
@@ -455,6 +462,8 @@ public class Main extends Application implements Cloneable  {
         if(file != null){
             // ta_insertar_texto_id.setText(readFile(file));
             ca_insertar_texto_id.replaceText(readFile(file));
+            currentFile = file; // Guardar referencia del archivo actual
+            miPrimaryStage.setTitle("Analizador Léxico y Sintáctico - " + file.getName());
         }
     }
 
@@ -655,4 +664,260 @@ public void mostrarTablaSimbolos(String texto) {
                     + "|(?<STRING>" + STRING_PATTERN + ")"
                     + "|(?<COMMENT>" + COMMENT_PATTERN + ")"
     );
+
+    // ================== MÉTODOS DEL MENÚ ================== //
+
+    /**
+     * Método para abrir archivo desde el menú
+     */
+    @FXML
+    public void menu_action_abrir() {
+        btn_action_abrirArchivo(); // Reutiliza la funcionalidad existente
+    }
+
+    /**
+     * Método para guardar archivo
+     */
+    @FXML
+    public void menu_action_guardar() {
+        if (currentFile != null) {
+            guardarArchivo(currentFile);
+        } else {
+            menu_action_guardar_como();
+        }
+    }
+
+    /**
+     * Método para guardar archivo como
+     */
+    @FXML
+    public void menu_action_guardar_como() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Guardar archivo como");
+        
+        // Establecer filtros de extensión
+        FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("TXT files (*.txt)", "*.txt");
+        fileChooser.getExtensionFilters().add(extFilter);
+        
+        // Mostrar diálogo de guardar
+        File file = fileChooser.showSaveDialog(miPrimaryStage);
+        
+        if (file != null) {
+            // Asegurar que el archivo tenga la extensión .txt
+            if (!file.getName().toLowerCase().endsWith(".txt")) {
+                file = new File(file.getAbsolutePath() + ".txt");
+            }
+            guardarArchivo(file);
+            currentFile = file;
+            miPrimaryStage.setTitle("Analizador Léxico y Sintáctico - " + file.getName());
+        }
+    }
+
+    /**
+     * Método para exportar todo a PDF
+     */
+    @FXML
+    public void menu_action_exportar_pdf() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Exportar reporte como PDF");
+        
+        // Establecer filtros de extensión
+        FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("PDF files (*.pdf)", "*.pdf");
+        fileChooser.getExtensionFilters().add(extFilter);
+        
+        // Sugerir nombre de archivo con fecha y hora
+        String fechaHora = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"));
+        fileChooser.setInitialFileName("Reporte_Analisis_" + fechaHora + ".pdf");
+        
+        // Mostrar diálogo de guardar
+        File file = fileChooser.showSaveDialog(miPrimaryStage);
+        
+        if (file != null) {
+            // Asegurar que el archivo tenga la extensión .pdf
+            if (!file.getName().toLowerCase().endsWith(".pdf")) {
+                file = new File(file.getAbsolutePath() + ".pdf");
+            }
+            exportarAPDF(file);
+        }
+    }
+
+    /**
+     * Guarda el contenido del CodeArea en un archivo
+     */
+    private void guardarArchivo(File file) {
+        try (PrintWriter writer = new PrintWriter(file)) {
+            writer.print(ca_insertar_texto_id.getText());
+            
+            // Mostrar mensaje de confirmación
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Guardado exitoso");
+            alert.setHeaderText(null);
+            alert.setContentText("El archivo se ha guardado correctamente.");
+            alert.showAndWait();
+            
+        } catch (FileNotFoundException e) {
+            // Mostrar mensaje de error
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Error al guardar");
+            alert.setHeaderText(null);
+            alert.setContentText("No se pudo guardar el archivo: " + e.getMessage());
+            alert.showAndWait();
+        }
+    }
+
+    /**
+     * Exporta un reporte completo del análisis a PDF
+     */
+    private void exportarAPDF(File file) {
+        try {
+            // Crear un HTML temporal con todo el contenido
+            String htmlContent = generarReporteHTML();
+            
+            // Crear archivo HTML temporal
+            File tempHtml = new File("temp_reporte.html");
+            try (PrintWriter writer = new PrintWriter(tempHtml)) {
+                writer.print(htmlContent);
+            }
+            
+            // Mostrar mensaje informativo sobre la generación del reporte
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Reporte generado");
+            alert.setHeaderText(null);
+            alert.setContentText("Se ha generado el archivo HTML temporal: " + tempHtml.getAbsolutePath() + 
+                                "\n\nPara convertir a PDF, puede usar herramientas como:\n" +
+                                "- Imprimir como PDF desde un navegador web\n" +
+                                "- Usar herramientas online de conversión HTML a PDF\n" +
+                                "- Usar herramientas de línea de comandos como wkhtmltopdf");
+            alert.showAndWait();
+            
+            // Intentar abrir el archivo HTML en el navegador por defecto
+            if (Desktop.isDesktopSupported()) {
+                Desktop.getDesktop().open(tempHtml);
+            }
+            
+        } catch (IOException e) {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Error al exportar");
+            alert.setHeaderText(null);
+            alert.setContentText("No se pudo generar el reporte: " + e.getMessage());
+            alert.showAndWait();
+        }
+    }
+
+    /**
+     * Genera el contenido HTML del reporte completo
+     */
+    private String generarReporteHTML() {
+        StringBuilder html = new StringBuilder();
+        String fechaHora = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"));
+        
+        html.append("<!DOCTYPE html>\n");
+        html.append("<html>\n<head>\n");
+        html.append("<meta charset='UTF-8'>\n");
+        html.append("<title>Reporte de Análisis Léxico y Sintáctico</title>\n");
+        html.append("<style>\n");
+        html.append("body { font-family: Arial, sans-serif; margin: 20px; }\n");
+        html.append("h1 { color: #333; border-bottom: 2px solid #333; }\n");
+        html.append("h2 { color: #666; margin-top: 30px; }\n");
+        html.append("table { border-collapse: collapse; width: 100%; margin: 10px 0; }\n");
+        html.append("th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }\n");
+        html.append("th { background-color: #f4f4f4; }\n");
+        html.append("pre { background-color: #f8f8f8; padding: 10px; border: 1px solid #ddd; overflow-x: auto; }\n");
+        html.append(".codigo { font-family: 'Courier New', monospace; font-size: 12px; }\n");
+        html.append("</style>\n");
+        html.append("</head>\n<body>\n");
+        
+        // Título del reporte
+        html.append("<h1>Reporte de Análisis Léxico y Sintáctico</h1>\n");
+        html.append("<p><strong>Fecha y hora de generación:</strong> ").append(fechaHora).append("</p>\n");
+        if (currentFile != null) {
+            html.append("<p><strong>Archivo analizado:</strong> ").append(currentFile.getName()).append("</p>\n");
+        }
+        
+        // Código fuente
+        html.append("<h2>Código Fuente</h2>\n");
+        html.append("<pre class='codigo'>").append(escaparHTML(ca_insertar_texto_id.getText())).append("</pre>\n");
+        
+        // Tokens encontrados
+        html.append("<h2>Tokens Encontrados</h2>\n");
+        html.append("<table>\n");
+        html.append("<tr><th>Token</th><th>Tipo de Token</th><th>Línea</th></tr>\n");
+        for (ItemTablaTokens item : info_tabla_tokens) {
+            html.append("<tr>");
+            html.append("<td>").append(escaparHTML(item.getToken())).append("</td>");
+            html.append("<td>").append(escaparHTML(item.getTipoToken())).append("</td>");
+            html.append("<td>").append(escaparHTML(item.getLinea())).append("</td>");
+            html.append("</tr>\n");
+        }
+        html.append("</table>\n");
+        
+        // Errores léxicos
+        html.append("<h2>Errores Léxicos</h2>\n");
+        if (info_tabla_errores.isEmpty()) {
+            html.append("<p>No se encontraron errores léxicos.</p>\n");
+        } else {
+            html.append("<table>\n");
+            html.append("<tr><th>Error</th><th>Tipo de Error</th><th>Línea</th></tr>\n");
+            for (ItemTablaErrores item : info_tabla_errores) {
+                html.append("<tr>");
+                html.append("<td>").append(escaparHTML(item.getError())).append("</td>");
+                html.append("<td>").append(escaparHTML(item.getTipoError())).append("</td>");
+                html.append("<td>").append(escaparHTML(item.getLinea_error())).append("</td>");
+                html.append("</tr>\n");
+            }
+            html.append("</table>\n");
+        }
+        
+        // Errores sintácticos
+        html.append("<h2>Errores Sintácticos</h2>\n");
+        String erroresSintacticos = ta_errores_sintacticos_id.getText();
+        if (erroresSintacticos == null || erroresSintacticos.trim().isEmpty()) {
+            html.append("<p>No se encontraron errores sintácticos.</p>\n");
+        } else {
+            html.append("<pre>").append(escaparHTML(erroresSintacticos)).append("</pre>\n");
+        }
+        
+        // Errores semánticos
+        html.append("<h2>Errores Semánticos</h2>\n");
+        String erroresSemanticos = ta_errores_semanticos_id.getText();
+        if (erroresSemanticos == null || erroresSemanticos.trim().isEmpty()) {
+            html.append("<p>No se encontraron errores semánticos.</p>\n");
+        } else {
+            html.append("<pre>").append(escaparHTML(erroresSemanticos)).append("</pre>\n");
+        }
+        
+        // Tabla de símbolos
+        html.append("<h2>Tabla de Símbolos</h2>\n");
+        if (info_tabla_simbolos.isEmpty()) {
+            html.append("<p>La tabla de símbolos está vacía.</p>\n");
+        } else {
+            html.append("<table>\n");
+            html.append("<tr><th>Nombre</th><th>Tipo</th><th>Valor</th><th>Alcance</th><th>Secuencia de Operaciones</th></tr>\n");
+            for (ItemTablaSimbolos item : info_tabla_simbolos) {
+                html.append("<tr>");
+                html.append("<td>").append(escaparHTML(item.getNombre())).append("</td>");
+                html.append("<td>").append(escaparHTML(item.getTipo())).append("</td>");
+                html.append("<td>").append(escaparHTML(item.getValor())).append("</td>");
+                html.append("<td>").append(escaparHTML(item.getAlcance())).append("</td>");
+                html.append("<td>").append(escaparHTML(item.getSecuenciaDeOperaciones())).append("</td>");
+                html.append("</tr>\n");
+            }
+            html.append("</table>\n");
+        }
+        
+        html.append("</body>\n</html>");
+        return html.toString();
+    }
+
+    /**
+     * Escapa caracteres HTML para evitar problemas de formato
+     */
+    private String escaparHTML(String texto) {
+        if (texto == null) return "";
+        return texto.replace("&", "&amp;")
+                   .replace("<", "&lt;")
+                   .replace(">", "&gt;")
+                   .replace("\"", "&quot;")
+                   .replace("'", "&#x27;");
+    }
 }
